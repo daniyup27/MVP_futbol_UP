@@ -1,0 +1,8 @@
+// Configuración del torneo de fútbol
+export const TOURNAMENT_CONFIG = {
+  MAX_PLAYERS_PER_TEAM: 15,
+  MIN_PLAYERS_TO_START: 7,
+  MATCH_DURATION_MINUTES: 90,
+  ALLOWED_SUBSTITUTIONS: 3,
+  DEFAULT_TOURNAMENT_NAME: "Torneo Semestral 2026-II"
+};
