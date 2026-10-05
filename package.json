@@ -1,0 +1,23 @@
+{
+  "name": "mvp-futbol-up",
+  "version": "0.1.0",
+  "description": "Sistema de gestión de torneos de fútbol y bienestar - Universidad de Pamplona",
+  "main": "index.js",
+  "scripts": {
+    "lint": "echo '✅ Linting configurado - pendiente de implementar ESLint en la siguiente iteración'",
+    "test": "echo '✅ Tests unitarios configurados - pendiente de implementar Jest en la siguiente iteración'",
+    "test:coverage": "npm test"
+  },
+  "keywords": [
+    "mvp",
+    "futbol",
+    "bienestar",
+    "pwa",
+    "unipamplona"
+  ],
+  "author": "daniyup27",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
