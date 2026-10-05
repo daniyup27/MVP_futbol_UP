@@ -1,0 +1,49 @@
+name: CI Pipeline - MVP Fútbol UP
+
+# Este pipeline se ejecutará cada vez que se abra un Pull Request o se haga push a main
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # Usamos un servidor Linux de GitHub
+
+    steps:
+      # 1. Checkout: Descarga el código de la rama del PR
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js: Instala la versión 18.x
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      # 3. Install Dependencies: Instala dependencias de forma determinista
+      - name: Instalar dependencias
+        run: npm ci
+        continue-on-error: true # Permite que el pipeline continúe si no hay package.json
+
+      # 4. Lint: Verifica estilo y errores estáticos con ESLint
+      - name: Ejecutar Linter
+        run: |
+          if [ -f package.json ]; then
+            npm run lint
+          else
+            echo "⚠️ Linting omitido temporalmente: package.json no configurado aún"
+            echo "✅ Pipeline configurado correctamente - pendiente de implementación de ESLint"
+          fi
+
+      # 5. Test: Corre la suite unitaria y de integración con Jest
+      - name: Ejecutar pruebas con cobertura
+        run: |
+          if [ -f package.json ]; then
+            npm run test:coverage
+          else
+            echo "⚠️ Pruebas omitidas temporalmente: package.json no configurado aún"
+            echo "✅ Pipeline configurado correctamente - pendiente de implementación de Jest"
+          fi
