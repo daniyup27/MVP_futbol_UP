@@ -24,7 +24,7 @@ jobs:
 
       # 3. Install Dependencies: Instala dependencias de forma determinista
       - name: Instalar dependencias
-        run: npm ci
+        run: npm install
         continue-on-error: true # Permite que el pipeline continúe si no hay package.json
 
       # 4. Lint: Verifica estilo y errores estáticos con ESLint
