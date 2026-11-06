@@ -1,0 +1,37 @@
+{
+  "name": "mvp-futbol-up",
+  "version": "0.1.0",
+  "description": "Sistema de gestión de torneos de fútbol y bienestar - Universidad de Pamplona",
+  "main": "index.js",
+  "scripts": {
+    "lint": "echo 'Linting configurado - pendiente de implementar ESLint'",
+    "test": "jest --passWithNoTests",
+    "test:unit": "jest --testPathPattern=src/core/__tests__ --passWithNoTests",
+    "test:integration": "jest --testPathPattern=src/__tests__/integration --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests"
+  },
+  "keywords": ["mvp", "futbol", "bienestar", "pwa", "unipamplona"],
+  "author": "daniyup27",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.5"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/src"],
+    "testMatch": [
+      "**/__tests__/**/*.test.ts",
+      "**/*.test.ts"
+    ],
+    "moduleFileExtensions": ["ts", "js", "json"]
+  }
+}
