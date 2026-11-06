@@ -1,0 +1,377 @@
+openapi: 3.0.3
+info:
+  title: MVP Fútbol UP - API de Gestión de Torneos y Bienestar
+  description: |
+    API REST para la gestión de torneos de fútbol universitario y 
+    autoevaluaciones de bienestar anonimadas bajo Ley 1581 de Colombia.
+    
+    Nivel de madurez: Richardson Nivel 2 (verbos y códigos de estado correctos).
+    Seguridad: JWT Bearer Token en endpoints críticos.
+  version: 0.1.0
+  contact:
+    name: daniyup27
+    url: https://github.com/daniyup27/MVP_futbol_UP
+
+servers:
+  - url: https://mvp-futbol-up.vercel.app/api
+    description: Servidor de producción (Vercel)
+  - url: http://localhost:3000/api
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Auth
+    description: Autenticación y gestión de identidad
+  - name: Torneos
+    description: Gestión de torneos, equipos y partidos
+  - name: Bienestar
+    description: Autoevaluaciones de bienestar anonimadas (Ley 1581)
+
+paths:
+  /auth/login:
+    post:
+      summary: Iniciar sesión y obtener token JWT
+      description: |
+        Autentica al usuario con credenciales institucionales y retorna 
+        un JWT firmado. Este token debe enviarse en el header Authorization 
+        de los endpoints protegidos.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticación exitosa. Token JWT retornado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales inválidas.
+
+  /auth/me:
+    get:
+      summary: Obtener perfil del usuario autenticado
+      tags:
+        - Auth
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Perfil del usuario autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioPerfil'
+        '401':
+          description: Token ausente o inválido.
+
+  /torneos/activos:
+    get:
+      summary: Listar torneos activos (endpoint público)
+      description: |
+        Retorna la lista de torneos actualmente activos. 
+        No requiere autenticación para fomentar la participación.
+      tags:
+        - Torneos
+      responses:
+        '200':
+          description: Lista de torneos activos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TorneoPublico'
+
+  /torneos/{id}/equipos:
+    post:
+      summary: Inscribir un equipo en un torneo
+      description: |
+        Permite a un capitán inscribir un nuevo equipo en un torneo activo.
+        Requiere autenticación con rol CAPITAN o ADMIN.
+      tags:
+        - Torneos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipoCreateRequest'
+      responses:
+        '201':
+          description: Equipo inscrito exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipoResponse'
+        '400':
+          description: Datos de entrada inválidos (ej. más de 15 jugadores).
+        '401':
+          description: Token ausente o inválido.
+        '403':
+          description: Usuario sin permisos de capitán.
+        '409':
+          description: El nombre del equipo ya está en uso en este torneo.
+
+  /bienestar/evaluaciones:
+    post:
+      summary: Registrar autoevaluación de bienestar post-partido
+      description: |
+        Registra las escalas física y mental del estudiante tras un partido.
+        
+        IMPORTANTE (Ley 1581): El id_estudiante NUNCA viaja en el body.
+        Se extrae del token JWT (claim 'sub') en el backend y se anonimiza
+        mediante un UUID v4 criptográficamente seguro. Solo se persiste 
+        el id_anonimo_hash, imposible de revertir al estudiante real.
+      tags:
+        - Bienestar
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluacionRequest'
+      responses:
+        '201':
+          description: Evaluación registrada y anonimizada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluacionPublicaResponse'
+        '400':
+          description: Datos inválidos o partido no finalizado.
+        '401':
+          description: Token JWT ausente o inválido.
+
+  /bienestar/reportes/{idTorneo}:
+    get:
+      summary: Obtener reporte agregado de bienestar de un torneo
+      description: |
+        Retorna estadísticas agregadas (promedios, distribuciones) de las 
+        autoevaluaciones de bienestar de un torneo. 
+        
+        IMPORTANTE (Ley 1581): Solo datos anonimizados y agregados.
+        NUNCA se retornan datos individuales identificables.
+        Requiere rol ADMIN (profesora o Dependencia de Bienestar).
+      tags:
+        - Bienestar
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: idTorneo
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reporte agregado de bienestar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReporteBienestarResponse'
+        '401':
+          description: Token ausente o inválido.
+        '403':
+          description: Usuario sin permisos de administrador.
+        '404':
+          description: Torneo no encontrado.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token JWT obtenido vía POST /auth/login. 
+        Enviar en header: Authorization: Bearer <token>
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: estudiante@unipamplona.edu.co
+        password:
+          type: string
+          format: password
+          example: "********"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT firmado. Contiene claims: sub (id_usuario), rol, exp.
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          description: Tiempo de expiración en segundos.
+          example: 3600
+
+    UsuarioPerfil:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        email:
+          type: string
+          format: email
+        rol:
+          type: string
+          enum: [ESTUDIANTE, CAPITAN, ADMIN]
+
+    TorneoPublico:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+          example: "Torneo Semestral 2026-II"
+        tipo:
+          type: string
+          enum: [TRADITIONAL, WELLBEING]
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estado:
+          type: string
+          enum: [ACTIVO, FINALIZADO, CANCELADO]
+
+    EquipoCreateRequest:
+      type: object
+      required:
+        - nombre
+        - capitanId
+        - jugadores
+      properties:
+        nombre:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "Los Halcones"
+        capitanId:
+          type: string
+          format: uuid
+        jugadores:
+          type: array
+          minItems: 7
+          maxItems: 15
+          items:
+            type: string
+            format: uuid
+
+    EquipoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        torneoId:
+          type: string
+          format: uuid
+        cantidadJugadores:
+          type: integer
+
+    EvaluacionRequest:
+      type: object
+      required:
+        - idPartido
+        - escalaFisica
+        - escalaMental
+      properties:
+        idPartido:
+          type: string
+          format: uuid
+          description: ID del partido finalizado.
+        escalaFisica:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: "Escala de bienestar físico (1=muy malo, 5=excelente)."
+        escalaMental:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: "Escala de bienestar mental (1=muy malo, 5=excelente)."
+
+    EvaluacionPublicaResponse:
+      type: object
+      description: |
+        Respuesta pública que NUNCA expone el id_estudiante.
+        Solo retorna el hash anónimo (UUID v4) imposible de revertir.
+        Cumple Ley 1581 de Protección de Datos.
+      properties:
+        idAnonimoHash:
+          type: string
+          format: uuid
+          description: |
+            Hash UUID v4 criptográficamente seguro. 
+            Imposible de revertir al estudiante real.
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        mensaje:
+          type: string
+          example: "Evaluación registrada correctamente."
+
+    ReporteBienestarResponse:
+      type: object
+      description: |
+        Reporte agregado de bienestar. Solo datos anonimizados y estadísticos.
+        NUNCA incluye datos individuales identificables (Ley 1581).
+      properties:
+        torneoId:
+          type: string
+          format: uuid
+        totalEvaluaciones:
+          type: integer
+        promedioEscalaFisica:
+          type: number
+          format: float
+        promedioEscalaMental:
+          type: number
+          format: float
+        distribucion:
+          type: object
+          properties:
+            escalaFisica:
+              type: object
+              additionalProperties:
+                type: integer
+              description: "Cantidad de evaluaciones por valor (1-5)."
+            escalaMental:
+              type: object
+              additionalProperties:
+                type: integer
+              description: "Cantidad de evaluaciones por valor (1-5)."
