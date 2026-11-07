@@ -1,0 +1,7 @@
+# .trivyignore
+# Justificación: @types/node es una devDependency utilizada únicamente 
+# para el desarrollo y tipado en TypeScript. No se empaqueta ni se ejecuta 
+# en la imagen de producción (el Dockerfile usa 'npm ci --omit=dev'). 
+# Por lo tanto, el riesgo en el entorno de producción (runtime) es nulo.
+# Fecha de revisión y justificación: 2026-11-07
+CVE-2023-XXXXX
