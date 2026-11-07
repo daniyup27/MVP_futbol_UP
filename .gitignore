@@ -1,0 +1,22 @@
+# Variables de entorno con secrets
+.env
+.env.local
+.env.production
+
+# Dependencias
+node_modules/
+
+# Build de Next.js
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cobertura de pruebas
+coverage/
