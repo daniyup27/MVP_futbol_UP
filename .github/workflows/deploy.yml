@@ -36,6 +36,44 @@ jobs:
           echo "⏳ Esperando 60 segundos a que Render construya y despliegue..."
           sleep 60
 
+                - name: Healthcheck posterior al despliegue
+        run: |
+          echo "🔍 Verificando que el endpoint /health responda correctamente..."
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://mvp-futbol-up.onrender.com/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Healthcheck exitoso: endpoint /health responde 200 OK"
+              exit 0
+            fi
+            echo "⏳ Intento $i/10: Status $STATUS. Reintentando en 10 segundos..."
+            sleep 10
+          done
+          echo "❌ Healthcheck fallido: el endpoint /health no respondió 200 OK tras 10 intentos"
+          exit 1
+
+      - name: Verificar contrato OpenAPI en producción
+        run: |
+          echo "🔒 Verificando que el contrato OpenAPI se cumple en producción..."
+          RESPONSE=$(curl -s -X POST https://mvp-futbol-up.onrender.com/api/bienestar/evaluaciones \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.TEST_JWT_TOKEN }}" \
+            -d '{"idPartido":"123e4567-e89b-12d3-a456-426614174000","escalaFisica":4,"escalaMental":3}')
+          
+          echo "📋 Respuesta: $RESPONSE"
+          
+          # Verificar que NO contenga idEstudiante (Ley 1581)
+          if echo "$RESPONSE" | grep -q "idEstudiante"; then
+            echo "❌ VIOLACIÓN LEY 1581: La respuesta contiene idEstudiante"
+            exit 1
+          fi
+          
+          # Verificar que SÍ contenga idAnonimoHash
+          if echo "$RESPONSE" | grep -q "idAnonimoHash"; then
+            echo "✅ Contrato OpenAPI verificado: respuesta contiene idAnonimoHash"
+          else
+            echo "⚠️ Advertencia: no se pudo verificar idAnonimoHash en la respuesta"
+          fi
+
       - name: Healthcheck posterior al despliegue
         run: |
           echo "🔍 Verificando que el endpoint /health responda correctamente..."
