@@ -1,0 +1,22 @@
+{
+  "dashboard": {
+    "title": "MVP Fútbol UP - Observabilidad Endpoint Bienestar",
+    "panels": [
+      {
+        "title": "Tasa de peticiones (req/s)",
+        "type": "graph",
+        "targets": [{ "expr": "rate(evaluaciones_registradas_total[5m])" }]
+      },
+      {
+        "title": "Latencia p95 (ms)",
+        "type": "graph",
+        "targets": [{ "expr": "histogram_quantile(0.95, rate(evaluaciones_duration_ms_bucket[5m]))" }]
+      },
+      {
+        "title": "Porcentaje de errores (%)",
+        "type": "stat",
+        "targets": [{ "expr": "rate(evaluaciones_duration_ms_count{status=\"error\"}[5m]) / rate(evaluaciones_duration_ms_count[5m]) * 100" }]
+      }
+    ]
+  }
+}
