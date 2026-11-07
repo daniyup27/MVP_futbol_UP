@@ -1,0 +1,31 @@
+name: CI Security Scan - SAST & SCA
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  security-scan:
+    name: Trivy SAST/SCA Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Ejecutar Trivy para escanear el sistema de archivos (SAST + SCA)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1' # FALLA EL BUILD si hay vulnerabilidades CRÍTICAS o ALTAS
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Subir resultados a GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
