@@ -47,11 +47,6 @@ USER nextjs
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-# En el archivo next.config.js (créalo si no existe):
-const nextConfig = {
-  output: 'standalone',
-};
-module.exports = nextConfig;
 
 EXPOSE 3000
 
