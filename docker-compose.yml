@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+  # ============================================
+  # Servicio 1: Base de datos PostgreSQL
+  # ============================================
+  db:
+    image: postgres:16-alpine
+    container_name: mvp-futbol-up-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-futbol_up}
+      POSTGRES_USER: ${POSTGRES_USER:-futbol_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mvp-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-futbol_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Servicio 2: Aplicación Next.js
+  # ============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mvp-futbol-up-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-futbol_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-futbol_up}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mvp-network
+
+# ============================================
+# Volúmenes persistentes
+# ============================================
+volumes:
+  postgres_data:
+    driver: local
+    labels:
+      description: "Datos persistentes de PostgreSQL - MVP Fútbol UP"
+
+# ============================================
+# Red virtual aislada
+# ============================================
+networks:
+  mvp-network:
+    driver: bridge
+    labels:
+      description: "Red aislada para MVP Fútbol UP"
