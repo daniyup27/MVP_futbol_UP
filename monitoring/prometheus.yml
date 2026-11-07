@@ -1,0 +1,16 @@
+# monitoring/prometheus.yml
+# Configuración de Prometheus para el MVP Fútbol UP (ADR-13)
+# Recopila métricas del endpoint /metrics expuesto por la app
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'mvp-futbol-up'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['app:9464']
+        labels:
+          environment: 'production'
+          service: 'mvp-futbol-up'
