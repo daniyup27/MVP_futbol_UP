@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Instalar dependencias (incluye devDependencies necesarias para el build)
-RUN npm ci
+RUN npm install
 
 # Copiar el resto del código fuente
 COPY . .
@@ -30,7 +30,7 @@ WORKDIR /app
 
 # Copiar solo las dependencias de producción
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copiar el build y los archivos estáticos desde el builder
 COPY --from=builder /app/.next/standalone ./
