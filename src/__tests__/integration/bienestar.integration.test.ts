@@ -3,8 +3,8 @@
  * Pruebas de integración del módulo de bienestar.
  * 
  * Estrategia de aislamiento (ADR-07):
- * - El núcleo de dominio (ServicioBienestar) se ejecuta REAL para verificar
- *   que genera el UUID v4 correctamente (Ley 1581).
+ * - El núcleo de dominio (ServicioBienestar) y la seudonimización se ejecutan
+ *   REALES para verificar el idAnonimoHash HMAC-SHA256 (Ley 1581, ADR-16).
  * - Los puertos de entrada/salida se mockean (IValidadorPartido, IRepositorioBienestar).
  * - NO se usa la base de datos de desarrollo real.
  * - NO se mockea el núcleo de negocio (eso sería probar nada).
@@ -65,11 +65,10 @@ describe('Integración: Módulo de Bienestar (ADR-07)', () => {
 
       const evaluacionEnviada = (mockRepositorio.guardarEvaluacion as jest.Mock).mock.calls[0][0];
 
-      // ASSERT CRÍTICO DE PRIVACIDAD (Ley 1581):
-      // El hash debe ser un UUID v4 válido
-      expect(evaluacionEnviada.idAnonimoHash).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-      );
+      // ASSERT CRÍTICO DE PRIVACIDAD (Ley 1581, ADR-16):
+      // El hash es HMAC-SHA256 en hexadecimal (64 caracteres) y no contiene el id
+      expect(evaluacionEnviada.idAnonimoHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(evaluacionEnviada.idAnonimoHash).not.toContain(idEstudiante);
 
       // ASSERT NEGATIVO: NUNCA debe enviarse el idEstudiante al repositorio
       expect(evaluacionEnviada).not.toHaveProperty('idEstudiante');
@@ -104,26 +103,18 @@ describe('Integración: Módulo de Bienestar (ADR-07)', () => {
       expect(mockRepositorio.guardarEvaluacion).not.toHaveBeenCalled();
     });
 
-    it('debe generar hashes únicos para cada evaluación (anti-colisión)', async () => {
-      // Arrange: Mismo estudiante, mismo torneo, pero diferentes evaluaciones
-      const hashesGenerados = new Set<string>();
+    it('debe producir el mismo hash para el mismo estudiante y distinto para otro (ADR-16)', async () => {
+      // Act: dos evaluaciones del mismo estudiante y una de otro estudiante
+      await servicio.registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-finalizado', 4, 3);
+      await servicio.registrarEvaluacion('estudiante-A', 'torneo-2', 'partido-finalizado', 2, 5);
+      await servicio.registrarEvaluacion('estudiante-B', 'torneo-1', 'partido-finalizado', 4, 3);
 
-      // Act: Genera 10 hashes
-      for (let i = 0; i < 10; i++) {
-        await servicio.registrarEvaluacion(
-          'estudiante-fijo',
-          'torneo-fijo',
-          'partido-finalizado',
-          4,
-          3
-        );
+      const llamadas = (mockRepositorio.guardarEvaluacion as jest.Mock).mock.calls;
+      const [hashA1, hashA2, hashB] = llamadas.map((c) => c[0].idAnonimoHash);
 
-        const evaluacionEnviada = (mockRepositorio.guardarEvaluacion as jest.Mock).mock.calls[i][0];
-        hashesGenerados.add(evaluacionEnviada.idAnonimoHash);
-      }
-
-      // Assert: Los 10 hashes deben ser únicos (UUID v4 criptográficamente seguro)
-      expect(hashesGenerados.size).toBe(10);
+      // Assert: determinista por estudiante (seguimiento longitudinal) y sin colisión entre estudiantes
+      expect(hashA1).toBe(hashA2);
+      expect(hashA1).not.toBe(hashB);
     });
   });
 });

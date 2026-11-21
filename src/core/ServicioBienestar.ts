@@ -1,7 +1,7 @@
 // src/core/ServicioBienestar.ts
 import { IRepositorioBienestar, EvaluacionAnonima } from './ports/IRepositorioBienestar';
 import { IValidadorPartido } from './ports/IValidadorPartido';
-import { generarHashAnonimo } from '../utils/anonimizacion'; // Asumimos que existe de la guía anterior
+import { generarHashAnonimo } from '../utils/anonimizar';
 
 export class ServicioBienestar {
   constructor(
@@ -22,8 +22,11 @@ export class ServicioBienestar {
       throw new Error('No se puede evaluar un partido no finalizado');
     }
 
-    // 2. Regla de negocio crítica (Ley 1581): anonimización antes de persistir
-    const idAnonimoHash = generarHashAnonimo(idEstudiante, idTorneo);
+    // 2. Regla de negocio crítica (Ley 1581): seudonimización antes de persistir.
+    //    El hash depende solo del estudiante para permitir seguimiento entre
+    //    torneos (ADR-16); idTorneo se conserva en la firma por compatibilidad.
+    void idTorneo;
+    const idAnonimoHash = generarHashAnonimo(idEstudiante);
 
     const evaluacion: EvaluacionAnonima = {
       idAnonimoHash,

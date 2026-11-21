@@ -1,28 +1,35 @@
 /**
- * Utilidad para anonimizar datos sensibles cumpliendo con la Ley 1581.
- * Refactorización preventiva: se extrae la lógica de hashing a una función pura 
- * para eliminar código duplicado y facilitar las pruebas unitarias.
+ * Utilidad de seudonimización (Ley 1581 de 2012) — ADR-16.
+ *
+ * Se usa HMAC-SHA256 con un secreto externo (ANONIMIZATION_SALT) para que:
+ *  - el mismo estudiante produzca siempre el mismo idAnonimoHash, lo que
+ *    permite el seguimiento longitudinal de bienestar sin guardar su identidad;
+ *  - sin el secreto no sea factible recalcular el hash a partir de una cédula.
+ *
+ * El secreto NO tiene valor por defecto: si falta, la función falla. Un valor
+ * embebido en el código anularía la protección (cualquiera con el repositorio
+ * podría recalcular los hashes).
  */
 
-import crypto from 'crypto';
+import { createHmac } from 'crypto';
+
+export function obtenerSalt(): string {
+  const salt = process.env.ANONIMIZATION_SALT;
+  if (!salt || salt.length < 32) {
+    throw new Error('ANONIMIZATION_SALT no configurado o con menos de 32 caracteres');
+  }
+  return salt;
+}
 
 /**
- * Genera un hash SHA-256 seguro y anónimo a partir de un identificador.
- * @param identificador - El dato sensible original (ej. cédula, email).
- * @returns Un string hash anónimo.
+ * Genera el idAnonimoHash (64 caracteres hexadecimales) de un identificador.
+ * @param identificador - Dato sensible original (p. ej. id institucional).
  */
 export function generarHashAnonimo(identificador: string): string {
   if (!identificador || typeof identificador !== 'string') {
     throw new Error('El identificador debe ser un string válido');
   }
-  
-  // Se usa un salt fijo del entorno o un valor por defecto seguro para el MVP
-  const salt = process.env.ANONIMIZATION_SALT || 'mvp-futbol-up-salt-2026';
-  
-  return crypto
-    .createHash('sha256')
-    .update(`${salt}:${identificador}`)
-    .digest('hex');
+  return createHmac('sha256', obtenerSalt()).update(identificador).digest('hex');
 }
 
 /**
