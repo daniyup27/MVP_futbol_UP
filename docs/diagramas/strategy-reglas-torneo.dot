@@ -1,0 +1,18 @@
+// FPI-III-03 · Participantes de Strategy (editable)
+digraph Strategy {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=11, label="Strategy ReglasTorneo · participantes", labelloc=t];
+  node [shape=record, fontname="Helvetica", fontsize=10, style=filled, fillcolor="#F4F6F8"];
+  edge [fontname="Helvetica", fontsize=9];
+  cliente [label="{Consumidor|validarCantidadJugadores(cantidad, tipo, reglas?)}"];
+  registro [label="{REGLAS_POR_TIPO|Record\<tipo, ReglasTorneo\>\l(se construye desde tournament.config)\l}"];
+  contrato [label="{«interface»\nReglasTorneo|tipo\lminJugadores\lmaxJugadores\l|validarCantidadJugadores(n)\l}", fillcolor="#E8F1FB"];
+  rango [label="{reglasPorRango(tipo, min, max)|TRADITIONAL 7–15\lWELLBEING 5–11\lFUTSAL 5–12 (CR-01)\l}"];
+  prueba [label="{Estrategia de prueba|PRUEBA_PAR (solo en tests)}", fillcolor="#FFF4E0"];
+  config [label="{tournament.config|única fuente de límites}"];
+  cliente -> registro [label="elige por tipo"];
+  cliente -> contrato [label="invoca"];
+  rango -> contrato [style=dashed, arrowhead=onormal, label="implementa"];
+  prueba -> contrato [style=dashed, arrowhead=onormal];
+  registro -> rango [label="contiene"];
+  rango -> config [style=dotted, label="lee"];
+}
