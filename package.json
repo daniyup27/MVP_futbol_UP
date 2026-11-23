@@ -10,7 +10,13 @@
     "test:integration": "jest --testPathPattern=src/__tests__/integration --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests"
   },
-  "keywords": ["mvp", "futbol", "bienestar", "pwa", "unipamplona"],
+  "keywords": [
+    "mvp",
+    "futbol",
+    "bienestar",
+    "pwa",
+    "unipamplona"
+  ],
   "author": "daniyup27",
   "license": "MIT",
   "engines": {
@@ -27,11 +33,20 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "roots": ["<rootDir>/src"],
+    "roots": [
+      "<rootDir>/src"
+    ],
     "testMatch": [
       "**/__tests__/**/*.test.ts",
       "**/*.test.ts"
     ],
-    "moduleFileExtensions": ["ts", "js", "json"]
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest.setup.ts"
+    ]
   }
 }

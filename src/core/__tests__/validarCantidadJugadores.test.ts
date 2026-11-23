@@ -1,5 +1,5 @@
 // src/core/__tests__/validarCantidadJugadores.test.ts
-import { validarCantidadJugadores } from '../validarCantidadJugadores';
+import { validarCantidadJugadores, TipoTorneo } from '../validarCantidadJugadores';
 
 describe('validarCantidadJugadores', () => {
   it('debe aceptar 10 jugadores en torneo TRADITIONAL', () => {
@@ -29,7 +29,7 @@ describe('validarCantidadJugadores', () => {
   });
 
   it('debe lanzar error con tipo de torneo desconocido', () => {
-    expect(() => validarCantidadJugadores(5, 'FUTSAL')).toThrow(
+    expect(() => validarCantidadJugadores(5, 'FUTSAL' as TipoTorneo)).toThrow(
       'Tipo de torneo desconocido: FUTSAL'
     );
   });

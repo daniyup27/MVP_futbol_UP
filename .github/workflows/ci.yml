@@ -22,7 +22,7 @@ jobs:
           test -d src && echo "✅ Carpeta src existe" || echo "⚠️ Carpeta src no encontrada"
           echo "✅ Job de lint completado (estructura base)"
 
-  # Job 2: Verificación de pruebas (placeholder)
+  # Job 2: Suite de pruebas real (FPI-III-01)
   test:
     name: Suite de pruebas
     runs-on: ubuntu-latest
@@ -34,13 +34,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20.x'
+          cache: 'npm'
 
-      - name: Verificar existencia de pruebas
-        run: |
-          echo "✅ Buscando archivos de pruebas..."
-          find src -name "*.test.ts" -o -name "*.test.js" | head -10 || echo "⚠️ No se encontraron pruebas aún"
-          echo "✅ Job de tests completado (placeholder hasta configurar Jest)"
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar suite de pruebas (Jest)
+        run: npm test -- --ci
 
   # Job 3: Análisis estático (placeholder)
   sonarcloud:

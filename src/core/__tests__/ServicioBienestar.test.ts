@@ -14,8 +14,8 @@ const mockValidador: IValidadorPartido = {
 };
 
 // Mock de la función de anonimización (simulada para la prueba)
-jest.mock('../../utils/anonimizacion', () => ({
-  generarHashAnonimo: () => '123e4567-e89b-12d3-a456-426614174000'
+jest.mock('../../utils/anonimizar', () => ({
+  generarHashAnonimo: () => 'a'.repeat(64),
 }));
 
 describe('ServicioBienestar (Núcleo Hexagonal)', () => {
