@@ -16,6 +16,16 @@ export const TOURNAMENT_CONFIG = {
     MATCH_DURATION_MINUTES: 80,
     ALLOWED_SUBSTITUTIONS: 5,
     DEFAULT_TOURNAMENT_NAME: "Torneo de Bienestar 2026-II"
+  },
+
+  // Fútbol sala (CR-01, incremento 1). Valores PROPUESTOS: pendientes de
+  // confirmación por la Dependencia de Bienestar antes del incremento 2.
+  FUTSAL: {
+    MAX_PLAYERS_PER_TEAM: 12,
+    MIN_PLAYERS_TO_START: 5,
+    MATCH_DURATION_MINUTES: 40,
+    ALLOWED_SUBSTITUTIONS: 99, // cambios ilimitados en fútbol sala
+    DEFAULT_TOURNAMENT_NAME: "Torneo de Fútbol Sala 2026-II"
   }
 };
 
