@@ -1,0 +1,17 @@
+// FPI-III-05 · Flujo "registrar evaluación" DESPUÉS (rama swiii/g05-capas)
+digraph capas_despues {
+  rankdir=TB; graph [fontname="Helvetica", fontsize=11]; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+  subgraph cluster_pres { label="Presentación"; style=dashed; route [label="src/app/api/health/route.ts"]; }
+  subgraph cluster_infra { label="Infraestructura"; color=darkgreen;
+    instr [label="observabilidad/registroEvaluacionInstrumentado.ts\n(traza, métricas y log alrededor del caso de uso)", style=filled, fillcolor="#e0ffe0"];
+    logger [label="observabilidad/logger.ts", style=filled, fillcolor="#e0ffe0"];
+    repo [label="adapters/RepositorioBienestarPrisma.ts"];
+  }
+  subgraph cluster_nucleo { label="Núcleo: aplicación + dominio (src/core)"; color=blue;
+    servicio [label="ServicioBienestar.ts"]; puertos [label="ports/IRepositorioBienestar.ts\nports/IValidadorPartido.ts"];
+  }
+  subgraph cluster_trans { label="Transversal"; anon [label="utils/anonimizar.ts"]; }
+  otel [label="@opentelemetry/api", shape=component]; pino [label="pino", shape=component];
+  instr -> servicio [label="delega"]; instr -> logger; instr -> otel; logger -> pino;
+  servicio -> puertos; servicio -> anon; repo -> puertos [label="implementa"];
+}
