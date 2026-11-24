@@ -1,0 +1,19 @@
+// FPI-III-07 · Dependencias del caso de uso DESPUÉS (swiii/g07-puerto-anonimizador)
+digraph g07_despues {
+  rankdir=LR; graph [fontname="Helvetica", fontsize=11]; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+  comp [label="composicion/bienestar.ts\ncrearServicioBienestar()", style=filled, fillcolor="#e0ffe0"];
+  servicio [label="core/ServicioBienestar.ts"];
+  puerto [label="core/ports/IAnonimizador.ts\n«interface» generarHash(id)", style=filled, fillcolor="#e0ffe0"];
+  otros [label="core/ports/IRepositorioBienestar.ts\ncore/ports/IValidadorPartido.ts"];
+  hmac [label="infrastructure/seguridad/AnonimizadorHmac.ts\nvalida el secreto al construirse", style=filled, fillcolor="#e0ffe0"];
+  anon [label="utils/anonimizar.ts (sin cambios)"];
+  env [label="process.env", shape=cylinder];
+  doble [label="__tests__/dobles/AnonimizadorDePrueba.ts", shape=note];
+  contrato [label="__tests__/contratos/anonimizador.contrato.test.ts\nmismas 5 expectativas para ambas", shape=note, style=filled, fillcolor="#fff3c0"];
+  comp -> servicio [label="inyecta"]; comp -> hmac [label="elige en el arranque"];
+  servicio -> puerto; servicio -> otros;
+  hmac -> puerto [label="implementa", style=dashed, arrowhead=empty];
+  doble -> puerto [label="implementa", style=dashed, arrowhead=empty];
+  hmac -> anon; anon -> env;
+  contrato -> hmac [style=dotted]; contrato -> doble [style=dotted];
+}

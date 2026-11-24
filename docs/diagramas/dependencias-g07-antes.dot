@@ -1,0 +1,15 @@
+// FPI-III-07 · Dependencias del caso de uso ANTES (swiii/g06-servicio-evaluaciones)
+digraph g07_antes {
+  rankdir=LR; graph [fontname="Helvetica", fontsize=11]; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+  http [label="presentation/http/evaluacionesHttp.ts"];
+  servicio [label="core/ServicioBienestar.ts"];
+  puertos [label="core/ports/IRepositorioBienestar.ts\ncore/ports/IValidadorPartido.ts"];
+  anon [label="utils/anonimizar.ts\nlee process.env.ANONIMIZATION_SALT\nen cada llamada", style=filled, fillcolor="#ffe0e0"];
+  env [label="process.env", shape=cylinder];
+  prueba [label="ServicioBienestar.test.ts\njest.mock('../../utils/anonimizar')\n→ 'a' x 64 constante", shape=note, style=filled, fillcolor="#fff3c0"];
+  http -> servicio [label="construye y llama"];
+  servicio -> puertos;
+  servicio -> anon [color=red, penwidth=2, label="aplicación conoce una función concreta"];
+  anon -> env [color=red];
+  prueba -> anon [style=dashed, label="reemplaza el módulo por ruta"];
+}

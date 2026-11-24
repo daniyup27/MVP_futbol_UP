@@ -13,6 +13,7 @@
 import { ServicioBienestar } from '../../core/ServicioBienestar';
 import { IRepositorioBienestar, EvaluacionAnonima } from '../../core/ports/IRepositorioBienestar';
 import { IValidadorPartido } from '../../core/ports/IValidadorPartido';
+import { AnonimizadorHmac } from '../../infrastructure/seguridad/AnonimizadorHmac';
 
 // Mock del repositorio (Stub simple)
 // Simula el adaptador de Prisma sin tocar la BD real
@@ -39,7 +40,7 @@ describe('Integración: Módulo de Bienestar (ADR-07)', () => {
   beforeEach(() => {
     // Reinicia los mocks antes de cada prueba
     jest.clearAllMocks();
-    servicio = new ServicioBienestar(mockRepositorio, mockValidador);
+    servicio = new ServicioBienestar(mockRepositorio, mockValidador, AnonimizadorHmac.desdeEntorno());
   });
 
   describe('POST /bienestar/evaluaciones - Flujo completo', () => {
