@@ -2,23 +2,9 @@
 import { IRepositorioBienestar, EvaluacionAnonima } from './ports/IRepositorioBienestar';
 import { IValidadorPartido } from './ports/IValidadorPartido';
 import { IAnonimizador } from './ports/IAnonimizador';
-import {
-  DatosEvaluacionInvalidosError,
-  DependenciaNoDisponibleError,
-  ErrorDeNegocio,
-  PartidoNoFinalizadoError,
-} from './errores';
-
-export const ESCALA_MINIMA = 1;
-export const ESCALA_MAXIMA = 5;
-
-function validarEscala(nombre: string, valor: number): void {
-  if (!Number.isInteger(valor) || valor < ESCALA_MINIMA || valor > ESCALA_MAXIMA) {
-    throw new DatosEvaluacionInvalidosError(
-      `${nombre} debe ser un entero entre ${ESCALA_MINIMA} y ${ESCALA_MAXIMA}`
-    );
-  }
-}
+import { DependenciaNoDisponibleError, ErrorDeNegocio, PartidoNoFinalizadoError } from './errores';
+import { EscalaBienestar } from './dominio/EscalaBienestar';
+import { AutoevaluacionBienestar } from './dominio/AutoevaluacionBienestar';
 
 /**
  * Servicio de aplicación del caso de uso "registrar autoevaluación".
@@ -43,9 +29,10 @@ export class ServicioBienestar {
     escalaFisica: number,
     escalaMental: number
   ): Promise<string> {
-    // 1. Reglas que el servicio puede comprobar con los datos recibidos
-    validarEscala('escalaFisica', escalaFisica);
-    validarEscala('escalaMental', escalaMental);
+    // 1. Las escalas se validan en su objeto de valor (FPI-III-08); se crean antes de
+    //    consultar dependencias para no gastar una llamada en datos inválidos.
+    EscalaBienestar.crear(escalaFisica, 'escalaFisica');
+    EscalaBienestar.crear(escalaMental, 'escalaMental');
 
     // 2. Regla de negocio: solo se evalúa partido finalizado
     const partidoFinalizado = await this.consultar('validador-partidos', () =>
@@ -58,13 +45,12 @@ export class ServicioBienestar {
     // 3. Regla crítica (Ley 1581): seudonimización antes de persistir (ADR-16).
     //    idTorneo se conserva en la firma por compatibilidad.
     void idTorneo;
-    const evaluacion: EvaluacionAnonima = {
+    const evaluacion: EvaluacionAnonima = AutoevaluacionBienestar.registrar({
       idAnonimoHash: this.anonimizador.generarHash(idEstudiante),
       idPartido,
       escalaFisica,
       escalaMental,
-      fechaRegistro: new Date(),
-    };
+    }).aRegistro();
 
     // 4. Delegar la persistencia al adaptador (Inversión de Dependencias)
     return this.consultar('persistencia', () => this.repositorio.guardarEvaluacion(evaluacion));

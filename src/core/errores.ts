@@ -41,3 +41,19 @@ export class DependenciaNoDisponibleError extends Error {
     this.name = 'DependenciaNoDisponibleError';
   }
 }
+
+export class TransicionInvalidaError extends ErrorDeNegocio {
+  readonly codigo = 'TRANSICION_INVALIDA';
+  constructor(readonly desde: string, readonly operacion: string) {
+    super(`No se puede ${operacion} un partido en estado ${desde}`);
+    this.name = 'TransicionInvalidaError';
+  }
+}
+
+export class MarcadorInvalidoError extends ErrorDeNegocio {
+  readonly codigo = 'MARCADOR_INVALIDO';
+  constructor(mensaje: string) {
+    super(mensaje);
+    this.name = 'MarcadorInvalidoError';
+  }
+}
