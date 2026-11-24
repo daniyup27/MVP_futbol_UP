@@ -6,10 +6,14 @@
  * conectarse a PostgreSQL (ECONNREFUSED) y que el validador de partidos no
  * responde. Se verifica que el fallo se propaga por el adaptador y que el
  * servicio NO confirma la evaluación. No toca ninguna base real.
+ *
+ * FPI-III-06: desde el contrato del servicio, el fallo llega como
+ * DependenciaNoDisponibleError (error técnico) y conserva la causa original.
  */
 import { ServicioBienestar } from '../../core/ServicioBienestar';
 import { IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
 import { IValidadorPartido } from '../../core/ports/IValidadorPartido';
+import { DependenciaNoDisponibleError } from '../../core/errores';
 
 const errorConexion = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5432'), {
   code: 'ECONNREFUSED',
@@ -24,9 +28,11 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
     };
     const servicio = new ServicioBienestar(repositorioCaido, validadorOk);
 
-    await expect(
-      servicio.registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-1', 4, 3)
-    ).rejects.toMatchObject({ code: 'ECONNREFUSED' });
+    const error = await servicio
+      .registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-1', 4, 3)
+      .catch((e) => e);
+    expect(error).toBeInstanceOf(DependenciaNoDisponibleError);
+    expect(error).toMatchObject({ dependencia: 'persistencia', causa: { code: 'ECONNREFUSED' } });
     expect(repositorioCaido.guardarEvaluacion).toHaveBeenCalledTimes(1);
   });
 
@@ -37,9 +43,12 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
     };
     const servicio = new ServicioBienestar(repositorio, validadorCaido);
 
-    await expect(
-      servicio.registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-1', 4, 3)
-    ).rejects.toThrow('timeout validador');
+    const error = await servicio
+      .registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-1', 4, 3)
+      .catch((e) => e);
+    expect(error).toBeInstanceOf(DependenciaNoDisponibleError);
+    expect(error.dependencia).toBe('validador-partidos');
+    expect((error.causa as Error).message).toBe('timeout validador');
     expect(repositorio.guardarEvaluacion).not.toHaveBeenCalled();
   });
 });

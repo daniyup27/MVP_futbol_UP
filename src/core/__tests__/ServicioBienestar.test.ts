@@ -41,3 +41,17 @@ describe('ServicioBienestar (Núcleo Hexagonal)', () => {
     ).rejects.toThrow('No se puede evaluar un partido no finalizado');
   });
 });
+
+describe('ServicioBienestar · escalas (FPI-III-06)', () => {
+  const servicio = new ServicioBienestar(mockRepositorio, mockValidador);
+  it.each([1, 5])('acepta la escala límite %i', async (valor) => {
+    await expect(
+      servicio.registrarEvaluacion('est-1', 'tor-1', 'partido-finalizado', valor, valor)
+    ).resolves.toBe('id-evaluacion-123');
+  });
+  it.each([0, 6, 3.5])('rechaza la escala %p como dato inválido', async (valor) => {
+    await expect(
+      servicio.registrarEvaluacion('est-1', 'tor-1', 'partido-finalizado', valor, 3)
+    ).rejects.toMatchObject({ codigo: 'DATOS_INVALIDOS' });
+  });
+});
