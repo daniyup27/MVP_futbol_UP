@@ -3,8 +3,9 @@
 // Sirve para el ejemplo ejecutable y para comprobar el estado de datos en pruebas
 // sin tocar PostgreSQL (ADR-07). No es para producción: se pierde al reiniciar.
 import { EvaluacionAnonima, IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
+import { IConsultaEvaluaciones } from '../../core/ports/IConsultaEvaluaciones';
 
-export class RepositorioBienestarEnMemoria implements IRepositorioBienestar {
+export class RepositorioBienestarEnMemoria implements IRepositorioBienestar, IConsultaEvaluaciones {
   private readonly registros = new Map<string, EvaluacionAnonima>();
   private secuencia = 0;
 
@@ -13,6 +14,11 @@ export class RepositorioBienestarEnMemoria implements IRepositorioBienestar {
     const id = `mem-${this.secuencia}`;
     this.registros.set(id, { ...evaluacion });
     return id;
+  }
+
+  async buscarPorId(id: string): Promise<EvaluacionAnonima | null> {
+    const encontrada = this.registros.get(id);
+    return encontrada ? { ...encontrada } : null;
   }
 
   /** Solo lectura, para verificar el estado persistido. */
