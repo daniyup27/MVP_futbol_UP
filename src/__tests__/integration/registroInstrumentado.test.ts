@@ -6,6 +6,7 @@ import { Writable } from 'stream';
 import { ServicioBienestar } from '../../core/ServicioBienestar';
 import { IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
 import { IValidadorPartido } from '../../core/ports/IValidadorPartido';
+import { AnonimizadorHmac } from '../../infrastructure/seguridad/AnonimizadorHmac';
 import { RegistroEvaluacionInstrumentado } from '../../infrastructure/observabilidad/registroEvaluacionInstrumentado';
 
 function loggerEnMemoria() {
@@ -22,7 +23,7 @@ function loggerEnMemoria() {
 describe('RegistroEvaluacionInstrumentado (infraestructura)', () => {
   const repositorio: IRepositorioBienestar = { guardarEvaluacion: async () => 'db-id-1' };
   const validador: IValidadorPartido = { estaFinalizado: async (id) => id === 'partido-finalizado' };
-  const servicio = new ServicioBienestar(repositorio, validador);
+  const servicio = new ServicioBienestar(repositorio, validador, AnonimizadorHmac.desdeEntorno());
 
   it('devuelve el mismo id que el caso de uso sin instrumentar', async () => {
     const { log, lineas } = loggerEnMemoria();

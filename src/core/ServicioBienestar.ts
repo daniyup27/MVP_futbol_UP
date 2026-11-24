@@ -1,7 +1,7 @@
 // src/core/ServicioBienestar.ts
 import { IRepositorioBienestar, EvaluacionAnonima } from './ports/IRepositorioBienestar';
 import { IValidadorPartido } from './ports/IValidadorPartido';
-import { generarHashAnonimo } from '../utils/anonimizar';
+import { IAnonimizador } from './ports/IAnonimizador';
 import {
   DatosEvaluacionInvalidosError,
   DependenciaNoDisponibleError,
@@ -32,7 +32,8 @@ function validarEscala(nombre: string, valor: number): void {
 export class ServicioBienestar {
   constructor(
     private repositorio: IRepositorioBienestar,
-    private validador: IValidadorPartido
+    private validador: IValidadorPartido,
+    private anonimizador: IAnonimizador
   ) {}
 
   async registrarEvaluacion(
@@ -58,7 +59,7 @@ export class ServicioBienestar {
     //    idTorneo se conserva en la firma por compatibilidad.
     void idTorneo;
     const evaluacion: EvaluacionAnonima = {
-      idAnonimoHash: generarHashAnonimo(idEstudiante),
+      idAnonimoHash: this.anonimizador.generarHash(idEstudiante),
       idPartido,
       escalaFisica,
       escalaMental,

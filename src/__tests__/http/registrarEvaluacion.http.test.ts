@@ -5,7 +5,7 @@
 // consultar el estado de datos después de cada petición. No toca ninguna base real.
 import request = require('supertest');
 import { IncomingMessage } from 'http';
-import { ServicioBienestar } from '../../core/ServicioBienestar';
+import { crearServicioBienestar } from '../../composicion/bienestar';
 import { IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
 import { IValidadorPartido } from '../../core/ports/IValidadorPartido';
 import { RepositorioBienestarEnMemoria } from '../../infrastructure/adapters/RepositorioBienestarEnMemoria';
@@ -16,7 +16,7 @@ const autenticarPrueba = (req: IncomingMessage) => (req.headers['x-sub-prueba'] 
 const validador: IValidadorPartido = { estaFinalizado: async (id) => id === 'partido-finalizado' };
 
 function montar(repositorio: IRepositorioBienestar) {
-  const servicio = new ServicioBienestar(repositorio, validador);
+  const servicio = crearServicioBienestar({ repositorio, validador });
   return crearServidorEvaluaciones({ servicio, autenticar: autenticarPrueba });
 }
 
@@ -70,7 +70,7 @@ describe(`POST ${RUTA_EVALUACIONES}`, () => {
     const repo = new RepositorioBienestarEnMemoria();
     const validadorEspia: IValidadorPartido = { estaFinalizado: jest.fn().mockResolvedValue(true) };
     const servidor = crearServidorEvaluaciones({
-      servicio: new ServicioBienestar(repo, validadorEspia),
+      servicio: crearServicioBienestar({ repositorio: repo, validador: validadorEspia }),
       autenticar: autenticarPrueba,
     });
     const res = await request(servidor)

@@ -90,3 +90,26 @@ export function violaciones(deps: Dependencia[]): string[] {
   }
   return salida;
 }
+
+/**
+ * Regla 4 (FPI-III-07): el núcleo no lee variables de entorno, ni directamente
+ * ni a través de un módulo local que importe. La configuración se resuelve en
+ * la raíz de composición y llega al núcleo como un puerto ya construido.
+ */
+export function lecturasDeEntornoDesdeNucleo(raiz: string, deps: Dependencia[]): string[] {
+  const salida: string[] = [];
+  const leeEntorno = (rel: string) => {
+    const ruta = path.join(raiz, rel);
+    return fs.existsSync(ruta) && /process\.env/.test(fs.readFileSync(ruta, 'utf8'));
+  };
+  const nucleo = new Set(deps.filter((d) => d.capaOrigen === 'nucleo').map((d) => d.origen));
+  for (const archivo of nucleo) {
+    if (leeEntorno(archivo)) salida.push(`${archivo} lee process.env`);
+  }
+  for (const d of deps) {
+    if (d.capaOrigen === 'nucleo' && d.capaDestino !== 'nucleo' && d.capaDestino !== 'externo' && leeEntorno(d.destino)) {
+      salida.push(`${d.origen} -> ${d.destino} (el destino lee process.env)`);
+    }
+  }
+  return salida;
+}

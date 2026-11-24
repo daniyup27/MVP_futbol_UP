@@ -14,6 +14,7 @@ import { ServicioBienestar } from '../../core/ServicioBienestar';
 import { IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
 import { IValidadorPartido } from '../../core/ports/IValidadorPartido';
 import { DependenciaNoDisponibleError } from '../../core/errores';
+import { AnonimizadorDePrueba } from '../dobles/AnonimizadorDePrueba';
 
 const errorConexion = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5432'), {
   code: 'ECONNREFUSED',
@@ -26,7 +27,7 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
     const repositorioCaido: IRepositorioBienestar = {
       guardarEvaluacion: jest.fn().mockRejectedValue(errorConexion),
     };
-    const servicio = new ServicioBienestar(repositorioCaido, validadorOk);
+    const servicio = new ServicioBienestar(repositorioCaido, validadorOk, new AnonimizadorDePrueba());
 
     const error = await servicio
       .registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-1', 4, 3)
@@ -41,7 +42,7 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
     const validadorCaido: IValidadorPartido = {
       estaFinalizado: jest.fn().mockRejectedValue(new Error('timeout validador')),
     };
-    const servicio = new ServicioBienestar(repositorio, validadorCaido);
+    const servicio = new ServicioBienestar(repositorio, validadorCaido, new AnonimizadorDePrueba());
 
     const error = await servicio
       .registrarEvaluacion('estudiante-A', 'torneo-1', 'partido-1', 4, 3)
