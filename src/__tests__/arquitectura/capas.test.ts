@@ -2,7 +2,13 @@
 // FPI-III-05 · Comprobación repetible de la regla de dependencias.
 // Ejecutar: npx jest src/__tests__/arquitectura
 import * as path from 'path';
-import { leerDependencias, violaciones, capaDeArchivo, lecturasDeEntornoDesdeNucleo } from './reglasDependencia';
+import {
+  leerDependencias,
+  violaciones,
+  capaDeArchivo,
+  lecturasDeEntornoDesdeNucleo,
+  importacionesFueraDelDominio,
+} from './reglasDependencia';
 
 const RAIZ = path.resolve(__dirname, '../../..');
 
@@ -27,6 +33,11 @@ describe('Regla de dependencias entre capas', () => {
 
   it('el núcleo no lee variables de entorno ni importa módulos que las lean (FPI-III-07)', () => {
     expect(lecturasDeEntornoDesdeNucleo(RAIZ, deps)).toEqual([]);
+  });
+
+  it('el modelo de dominio solo depende de sí mismo, de los errores y de los puertos (FPI-III-13)', () => {
+    expect(importacionesFueraDelDominio(deps)).toEqual([]);
+    expect(deps.some((d) => d.origen.startsWith('src/core/dominio/'))).toBe(true);
   });
 
   it('la regla detecta un cruce si aparece (control negativo)', () => {

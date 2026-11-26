@@ -73,3 +73,17 @@ export class PartidoNoEncontradoError extends ErrorDeNegocio {
     this.name = 'PartidoNoEncontradoError';
   }
 }
+
+/**
+ * FPI-III-13 · Invariante de creación violada por el propio sistema (no por el usuario):
+ * por ejemplo, un seudónimo que no tiene el formato de ADR-16. No es ErrorDeNegocio,
+ * así que la presentación lo trata como error interno (500) y nunca se persiste nada.
+ */
+export class InvarianteVioladaError extends Error {
+  readonly codigo = 'INVARIANTE_VIOLADA';
+  constructor(mensaje: string) {
+    super(mensaje);
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.name = 'InvarianteVioladaError';
+  }
+}

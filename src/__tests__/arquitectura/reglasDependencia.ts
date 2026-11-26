@@ -113,3 +113,16 @@ export function lecturasDeEntornoDesdeNucleo(raiz: string, deps: Dependencia[]):
   }
   return salida;
 }
+
+/**
+ * Regla 5 (FPI-III-13): el modelo de dominio (src/core/dominio) solo importa otros archivos
+ * del dominio, los errores del núcleo y tipos de los puertos. Ni paquetes ni infraestructura,
+ * para que pueda probarse sin servidor ni base de datos.
+ */
+export function importacionesFueraDelDominio(deps: Dependencia[]): string[] {
+  const permitido = (destino: string) =>
+    destino.startsWith('src/core/dominio/') || destino === 'src/core/errores.ts' || destino.startsWith('src/core/ports/');
+  return deps
+    .filter((d) => d.origen.startsWith('src/core/dominio/') && !permitido(d.destino))
+    .map((d) => `${d.origen} -> ${d.destino}`);
+}
