@@ -1,0 +1,16 @@
+// FPI-III-05 · Flujo "registrar evaluación" ANTES (commit ab0713f)
+digraph capas_antes {
+  rankdir=TB; graph [fontname="Helvetica", fontsize=11]; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+  subgraph cluster_pres { label="Presentación"; style=dashed; route [label="src/app/api/health/route.ts\n(no existe ruta de evaluaciones)"]; }
+  subgraph cluster_nucleo { label="Núcleo: aplicación + dominio (src/core)"; color=blue;
+    servicio [label="ServicioBienestar.ts\n(caso de uso real)"];
+    duplicado [label="bienestar/evaluaciones.service.ts\nregistrarEvaluacion() simulado\ndevuelve 'anon-xyz-123'", style=filled, fillcolor="#ffe0e0"];
+    logger [label="logger.ts", style=filled, fillcolor="#ffe0e0"];
+    puertos [label="ports/IRepositorioBienestar.ts\nports/IValidadorPartido.ts"];
+  }
+  subgraph cluster_infra { label="Infraestructura"; repo [label="adapters/RepositorioBienestarPrisma.ts"]; }
+  subgraph cluster_trans { label="Transversal"; anon [label="utils/anonimizar.ts"]; }
+  otel [label="@opentelemetry/api", shape=component]; pino [label="pino", shape=component];
+  servicio -> puertos; servicio -> anon; repo -> puertos [label="implementa"];
+  duplicado -> otel [color=red, penwidth=2, label="prohibida"]; duplicado -> logger; logger -> pino [color=red, penwidth=2, label="prohibida"];
+}

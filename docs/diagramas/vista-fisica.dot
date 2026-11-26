@@ -1,0 +1,29 @@
+// FPI-III-02 · Vista física (editable). Generar PNG: dot -Tpng vista-fisica.dot -o vista-fisica.png
+digraph VistaFisica {
+  graph [rankdir=LR, fontname="Helvetica", fontsize=11, label="MVP Fútbol UP · Vista física (ambiente de producción y local)", labelloc=t, nodesep=0.45];
+  node  [shape=box3d, style=filled, fillcolor="#F4F6F8", fontname="Helvetica", fontsize=10];
+  edge  [fontname="Helvetica", fontsize=9];
+
+  nav [label="«dispositivo»\nNavegador / PWA\n(estudiante, staff)", shape=box, style="rounded,filled"];
+
+  subgraph cluster_render { label="Render · plan gratuito"; style=dashed;
+    web [label="«nodo» Web Service\ncontenedor node:20-alpine\nproceso: node server.js :3000\n1 instancia · usuario nextjs (uid 1001)"];
+  }
+  subgraph cluster_db { label="Proveedor de BD (por confirmar)"; style=dashed;
+    pg [label="«nodo» PostgreSQL 16\nbase futbol_up\n(datos persistentes)", shape=cylinder];
+  }
+  subgraph cluster_gh { label="GitHub"; style=dashed;
+    gha [label="«nodo» GitHub Actions\nCI · Security (Trivy) · CD"];
+  }
+  subgraph cluster_local { label="Equipo de desarrollo (docker-compose)"; style=dashed;
+    prom [label="«contenedor» Prometheus"];
+    graf [label="«contenedor» Grafana"];
+  }
+
+  nav -> web [label="HTTPS :443"];
+  web -> pg [label="TCP :5432\nDATABASE_URL (Prisma)"];
+  gha -> web [label="HTTPS webhook\nRENDER_DEPLOY_WEBHOOK"];
+  gha -> web [label="GET /api/health", style=dashed];
+  prom -> web [label="scrape /metrics :9464\n(solo local)", style=dotted];
+  graf -> prom [label="consulta PromQL", style=dotted];
+}

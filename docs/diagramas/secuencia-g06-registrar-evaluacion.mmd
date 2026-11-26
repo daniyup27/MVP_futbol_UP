@@ -1,0 +1,39 @@
+%% FPI-III-06 · POST /api/bienestar/evaluaciones (rama swiii/g06-servicio-evaluaciones)
+sequenceDiagram
+  autonumber
+  participant C as Cliente (PWA)
+  participant H as evaluacionesHttp<br/>(presentación)
+  participant S as ServicioBienestar<br/>(aplicación)
+  participant V as IValidadorPartido<br/>(puerto)
+  participant A as anonimizar<br/>(HMAC-SHA256)
+  participant R as IRepositorioBienestar<br/>(puerto → adaptador)
+  C->>H: POST {idPartido, escalaFisica, escalaMental} + token (sub)
+  H->>H: valida forma (tipos, sin PII en el cuerpo)
+  H->>S: registrarEvaluacion(sub, idTorneo, idPartido, ef, em)
+  S->>S: escalas enteras 1..5
+  alt escala fuera de rango
+    S-->>H: DatosEvaluacionInvalidosError (negocio)
+    H-->>C: 400 DATOS_INVALIDOS
+  end
+  S->>V: estaFinalizado(idPartido)
+  alt partido no finalizado
+    V-->>S: false
+    S-->>H: PartidoNoFinalizadoError (negocio)
+    H-->>C: 409 PARTIDO_NO_FINALIZADO
+  else validador sin respuesta
+    V--xS: error / timeout
+    S-->>H: DependenciaNoDisponibleError (técnico)
+    H-->>C: 503 DEPENDENCIA_NO_DISPONIBLE
+  end
+  V-->>S: true
+  S->>A: generarHashAnonimo(sub)
+  A-->>S: idAnonimoHash (64 hex)
+  S->>R: guardarEvaluacion({idAnonimoHash, idPartido, escalas, fecha})
+  alt base no disponible (ECONNREFUSED)
+    R--xS: error de conexión
+    S-->>H: DependenciaNoDisponibleError (técnico)
+    H-->>C: 503 DEPENDENCIA_NO_DISPONIBLE
+  end
+  R-->>S: idEvaluacion
+  S-->>H: idEvaluacion
+  H-->>C: 201 {idEvaluacion, mensaje}
