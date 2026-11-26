@@ -2,7 +2,12 @@
 import { IRepositorioBienestar, EvaluacionAnonima } from './ports/IRepositorioBienestar';
 import { IValidadorPartido } from './ports/IValidadorPartido';
 import { IAnonimizador } from './ports/IAnonimizador';
-import { DependenciaNoDisponibleError, ErrorDeNegocio, PartidoNoFinalizadoError } from './errores';
+import {
+  DependenciaNoDisponibleError,
+  ErrorDeNegocio,
+  PartidoNoEncontradoError,
+  PartidoNoFinalizadoError,
+} from './errores';
 import { EscalaBienestar } from './dominio/EscalaBienestar';
 import { AutoevaluacionBienestar } from './dominio/AutoevaluacionBienestar';
 import { RegistroEvaluacionPartido } from './dominio/RegistroEvaluacionPartido';
@@ -40,6 +45,9 @@ export class ServicioBienestar {
     const estadoPartido = await this.consultar('validador-partidos', () =>
       this.validador.consultarEstado(idPartido)
     );
+    if (estadoPartido === 'NO_EXISTE') {
+      throw new PartidoNoEncontradoError(idPartido); // H-02 (RD-01)
+    }
     if (estadoPartido !== 'FINALIZADO') {
       throw new PartidoNoFinalizadoError(idPartido);
     }
