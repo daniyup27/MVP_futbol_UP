@@ -87,3 +87,17 @@ export class InvarianteVioladaError extends Error {
     this.name = 'InvarianteVioladaError';
   }
 }
+
+/**
+ * FPI-III-14 · La base rechazó la escritura por la restricción de unicidad (RF-03) porque otra
+ * petición del mismo estudiante y partido se guardó entre la consulta y el INSERT. No es un
+ * error para el usuario: el servicio vuelve a consultar y aplica la regla del agregado.
+ */
+export class RegistroConcurrenteError extends Error {
+  readonly codigo = 'REGISTRO_CONCURRENTE';
+  constructor() {
+    super('Otra petición registró la misma autoevaluación al mismo tiempo');
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.name = 'RegistroConcurrenteError';
+  }
+}

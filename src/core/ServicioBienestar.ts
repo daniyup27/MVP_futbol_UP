@@ -7,6 +7,7 @@ import {
   ErrorDeNegocio,
   PartidoNoEncontradoError,
   PartidoNoFinalizadoError,
+  RegistroConcurrenteError,
 } from './errores';
 import { EscalaBienestar } from './dominio/EscalaBienestar';
 import { AutoevaluacionBienestar } from './dominio/AutoevaluacionBienestar';
@@ -59,20 +60,28 @@ export class ServicioBienestar {
     const nueva = AutoevaluacionBienestar.registrar({ idAnonimoHash, idPartido, escalaFisica, escalaMental });
 
     // 4. RF-03 (CR-03): el agregado decide si es nueva, un reintento o un duplicado distinto.
-    const existente = await this.consultar('persistencia', () =>
-      this.repositorio.buscarPorEstudianteYPartido(idAnonimoHash, idPartido)
-    );
-    const registro = RegistroEvaluacionPartido.cargar(
-      idAnonimoHash,
-      idPartido,
-      existente ? { id: existente.id, evaluacion: AutoevaluacionBienestar.reconstituir(existente.evaluacion) } : null
-    );
-    const resultado = registro.registrar(nueva);
-    if (resultado.tipo === 'REINTENTO') return resultado.idExistente;
+    //    5. Persistencia. Si otra petición guardó la misma clave entre la consulta y el INSERT
+    //    (RegistroConcurrenteError, FPI-III-14), se vuelve a consultar y se aplica la misma regla.
+    for (let intento = 1; ; intento++) {
+      const existente = await this.consultar('persistencia', () =>
+        this.repositorio.buscarPorEstudianteYPartido(idAnonimoHash, idPartido)
+      );
+      const registro = RegistroEvaluacionPartido.cargar(
+        idAnonimoHash,
+        idPartido,
+        existente ? { id: existente.id, evaluacion: AutoevaluacionBienestar.reconstituir(existente.evaluacion) } : null
+      );
+      const resultado = registro.registrar(nueva);
+      if (resultado.tipo === 'REINTENTO') return resultado.idExistente;
 
-    // 5. Delegar la persistencia al adaptador (Inversión de Dependencias)
-    const evaluacion: EvaluacionAnonima = resultado.evaluacion.aRegistro();
-    return this.consultar('persistencia', () => this.repositorio.guardarEvaluacion(evaluacion));
+      const evaluacion: EvaluacionAnonima = resultado.evaluacion.aRegistro();
+      try {
+        return await this.consultar('persistencia', () => this.repositorio.guardarEvaluacion(evaluacion));
+      } catch (error) {
+        if (error instanceof RegistroConcurrenteError && intento < 2) continue;
+        throw error;
+      }
+    }
   }
 
   // Un fallo de un puerto se informa como indisponibilidad, nunca como regla de negocio.
@@ -83,7 +92,13 @@ export class ServicioBienestar {
     try {
       return await operacion();
     } catch (error) {
-      if (error instanceof ErrorDeNegocio || error instanceof DependenciaNoDisponibleError) throw error;
+      if (
+        error instanceof ErrorDeNegocio ||
+        error instanceof DependenciaNoDisponibleError ||
+        error instanceof RegistroConcurrenteError
+      ) {
+        throw error;
+      }
       throw new DependenciaNoDisponibleError(dependencia, error);
     }
   }
