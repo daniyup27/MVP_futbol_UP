@@ -51,7 +51,8 @@ describe(`POST ${RUTA_EVALUACIONES}`, () => {
 
   it('dependencia no disponible: la base rechaza la conexión y se responde 503, no 409', async () => {
     const repoCaido: IRepositorioBienestar = {
-      guardarEvaluacion: jest.fn().mockRejectedValue(
+      buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: jest.fn().mockRejectedValue(
         Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5432'), { code: 'ECONNREFUSED' })
       ),
     };

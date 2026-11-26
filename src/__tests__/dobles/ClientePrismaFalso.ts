@@ -23,6 +23,13 @@ export class ClientePrismaFalso implements ClienteAutoevaluaciones {
       this.filas.set(fila.id, fila);
       return { ...fila };
     },
+    findFirst: async ({ where }: { where: { idAnonimoHash: string; idPartido: string } }): Promise<FilaAutoevaluacion | null> => {
+      this.fallarSiCaido();
+      const fila = [...this.filas.values()].find(
+        (f) => f.idAnonimoHash === where.idAnonimoHash && f.idPartido === where.idPartido
+      );
+      return fila ? { ...fila } : null;
+    },
     findUnique: async ({ where }: { where: { id: string } }): Promise<FilaAutoevaluacion | null> => {
       this.fallarSiCaido();
       const fila = this.filas.get(where.id);

@@ -18,7 +18,8 @@ import { AnonimizadorHmac } from '../../infrastructure/seguridad/AnonimizadorHma
 // Mock del repositorio (Stub simple)
 // Simula el adaptador de Prisma sin tocar la BD real
 const mockRepositorio: IRepositorioBienestar = {
-  guardarEvaluacion: jest.fn().mockImplementation(async (evaluacion: EvaluacionAnonima) => {
+  buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: jest.fn().mockImplementation(async (evaluacion: EvaluacionAnonima) => {
     // Simula el comportamiento del adaptador Prisma:
     // - Acepta la evaluación anonimada
     // - Retorna un ID de base de datos ficticio

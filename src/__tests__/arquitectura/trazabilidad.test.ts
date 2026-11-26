@@ -35,6 +35,7 @@ describe(`Matriz de trazabilidad v${matriz.version}`, () => {
   it('deja visibles los requisitos pendientes', () => {
     const pendientes = matriz.requisitos.filter((r) => r.estado === 'pendiente').map((r) => r.id);
     // Se actualiza cuando un requisito pasa a verificado.
-    expect(pendientes).toEqual(['RF-03']);
+    // RF-03 pasó a verificado en FPI-III-11 (CP-03).
+    expect(pendientes).toEqual([]);
   });
 });

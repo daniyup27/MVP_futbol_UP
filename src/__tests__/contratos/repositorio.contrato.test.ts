@@ -53,6 +53,9 @@ describe('Control negativo: el adaptador anterior no era sustituible', () => {
     async guardarEvaluacion(_evaluacion: EvaluacionAnonima): Promise<string> {
       return `db-id-${Date.now()}`;
     }
+    async buscarPorEstudianteYPartido() {
+      return null;
+    }
     async buscarPorId(id: string) {
       const fila = await this.dbClient.autoevaluacionBienestar.findUnique({ where: { id } });
       return fila;

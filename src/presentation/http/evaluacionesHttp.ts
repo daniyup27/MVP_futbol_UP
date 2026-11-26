@@ -4,7 +4,12 @@
 // resultado o el error tipado a un código HTTP. No conoce la base de datos.
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { ServicioBienestar } from '../../core/ServicioBienestar';
-import { DependenciaNoDisponibleError, ErrorDeNegocio, PartidoNoFinalizadoError } from '../../core/errores';
+import {
+  DependenciaNoDisponibleError,
+  ErrorDeNegocio,
+  EvaluacionYaRegistradaError,
+  PartidoNoFinalizadoError,
+} from '../../core/errores';
 
 export const RUTA_EVALUACIONES = '/api/bienestar/evaluaciones';
 
@@ -60,7 +65,7 @@ export async function manejarRegistroEvaluacion(
     );
     return { status: 201, body: { idEvaluacion, mensaje: 'Evaluación registrada correctamente.' } };
   } catch (error) {
-    if (error instanceof PartidoNoFinalizadoError) {
+    if (error instanceof PartidoNoFinalizadoError || error instanceof EvaluacionYaRegistradaError) {
       return { status: 409, body: { codigo: error.codigo, mensaje: error.message } };
     }
     if (error instanceof ErrorDeNegocio) {

@@ -21,7 +21,8 @@ function loggerEnMemoria() {
 }
 
 describe('RegistroEvaluacionInstrumentado (infraestructura)', () => {
-  const repositorio: IRepositorioBienestar = { guardarEvaluacion: async () => 'db-id-1' };
+  const repositorio: IRepositorioBienestar = { buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: async () => 'db-id-1' };
   const validador: IValidadorPartido = { estaFinalizado: async (id) => id === 'partido-finalizado' };
   const servicio = new ServicioBienestar(repositorio, validador, AnonimizadorHmac.desdeEntorno());
 

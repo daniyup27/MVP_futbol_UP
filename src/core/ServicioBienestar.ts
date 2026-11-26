@@ -5,13 +5,15 @@ import { IAnonimizador } from './ports/IAnonimizador';
 import { DependenciaNoDisponibleError, ErrorDeNegocio, PartidoNoFinalizadoError } from './errores';
 import { EscalaBienestar } from './dominio/EscalaBienestar';
 import { AutoevaluacionBienestar } from './dominio/AutoevaluacionBienestar';
+import { RegistroEvaluacionPartido } from './dominio/RegistroEvaluacionPartido';
 
 /**
  * Servicio de aplicación del caso de uso "registrar autoevaluación".
  * Contrato (FPI-III-06):
  *  - Precondiciones: escalas enteras 1..5 y partido finalizado.
  *  - Éxito: devuelve el id que asigna la persistencia; se guardó solo el hash.
- *  - Errores de negocio: DatosEvaluacionInvalidosError, PartidoNoFinalizadoError.
+ *  - Errores de negocio: DatosEvaluacionInvalidosError, PartidoNoFinalizadoError,
+ *    EvaluacionYaRegistradaError (RF-03). Un reintento igual devuelve el id existente.
  *  - Error técnico: DependenciaNoDisponibleError (validador o persistencia).
  *  En ningún error se llega a persistir la evaluación.
  */
@@ -45,14 +47,23 @@ export class ServicioBienestar {
     // 3. Regla crítica (Ley 1581): seudonimización antes de persistir (ADR-16).
     //    idTorneo se conserva en la firma por compatibilidad.
     void idTorneo;
-    const evaluacion: EvaluacionAnonima = AutoevaluacionBienestar.registrar({
-      idAnonimoHash: this.anonimizador.generarHash(idEstudiante),
-      idPartido,
-      escalaFisica,
-      escalaMental,
-    }).aRegistro();
+    const idAnonimoHash = this.anonimizador.generarHash(idEstudiante);
+    const nueva = AutoevaluacionBienestar.registrar({ idAnonimoHash, idPartido, escalaFisica, escalaMental });
 
-    // 4. Delegar la persistencia al adaptador (Inversión de Dependencias)
+    // 4. RF-03 (CR-03): el agregado decide si es nueva, un reintento o un duplicado distinto.
+    const existente = await this.consultar('persistencia', () =>
+      this.repositorio.buscarPorEstudianteYPartido(idAnonimoHash, idPartido)
+    );
+    const registro = RegistroEvaluacionPartido.cargar(
+      idAnonimoHash,
+      idPartido,
+      existente ? { id: existente.id, evaluacion: AutoevaluacionBienestar.reconstituir(existente.evaluacion) } : null
+    );
+    const resultado = registro.registrar(nueva);
+    if (resultado.tipo === 'REINTENTO') return resultado.idExistente;
+
+    // 5. Delegar la persistencia al adaptador (Inversión de Dependencias)
+    const evaluacion: EvaluacionAnonima = resultado.evaluacion.aRegistro();
     return this.consultar('persistencia', () => this.repositorio.guardarEvaluacion(evaluacion));
   }
 

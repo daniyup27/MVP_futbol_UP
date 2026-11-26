@@ -29,5 +29,11 @@ export async function incumplimientosDelContrato(repo: RepositorioCompleto): Pro
     if ('idEstudiante' in recuperada) fallas.push('no agrega datos personales');
   }
   if ((await repo.buscarPorId('no-existe')) !== null) fallas.push('id inexistente devuelve null');
+  // FPI-III-11 (CR-03): búsqueda por estudiante y partido
+  const porClave = await repo.buscarPorEstudianteYPartido(original.idAnonimoHash, 'partido-7');
+  if (porClave?.id !== id1) fallas.push('se encuentra por estudiante y partido');
+  if ((await repo.buscarPorEstudianteYPartido(original.idAnonimoHash, 'partido-99')) !== null) {
+    fallas.push('otro partido devuelve null');
+  }
   return fallas;
 }

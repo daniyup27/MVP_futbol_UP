@@ -25,7 +25,8 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
 
   it('propaga el error del adaptador y no devuelve id de evaluación', async () => {
     const repositorioCaido: IRepositorioBienestar = {
-      guardarEvaluacion: jest.fn().mockRejectedValue(errorConexion),
+      buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: jest.fn().mockRejectedValue(errorConexion),
     };
     const servicio = new ServicioBienestar(repositorioCaido, validadorOk, new AnonimizadorDePrueba());
 
@@ -38,7 +39,8 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
   });
 
   it('no intenta persistir si el validador de partidos no responde', async () => {
-    const repositorio: IRepositorioBienestar = { guardarEvaluacion: jest.fn() };
+    const repositorio: IRepositorioBienestar = { buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: jest.fn() };
     const validadorCaido: IValidadorPartido = {
       estaFinalizado: jest.fn().mockRejectedValue(new Error('timeout validador')),
     };

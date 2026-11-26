@@ -32,6 +32,16 @@ export class AutoevaluacionBienestar {
     );
   }
 
+  /** Reconstruye la entidad a partir de lo que devuelve la persistencia. */
+  static reconstituir(registro: EvaluacionAnonima): AutoevaluacionBienestar {
+    return AutoevaluacionBienestar.registrar(registro);
+  }
+
+  /** FPI-III-11: dos autoevaluaciones dicen lo mismo si sus escalas son iguales (objetos de valor). */
+  mismasRespuestas(otra: AutoevaluacionBienestar): boolean {
+    return this.escalaFisica.equals(otra.escalaFisica) && this.escalaMental.equals(otra.escalaMental);
+  }
+
   /** Forma plana que espera el puerto de persistencia. */
   aRegistro(): EvaluacionAnonima {
     return {

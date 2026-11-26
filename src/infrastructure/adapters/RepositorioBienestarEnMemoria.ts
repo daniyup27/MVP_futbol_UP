@@ -2,7 +2,7 @@
 // Implementación del puerto IRepositorioBienestar que guarda en un Map.
 // Sirve para el ejemplo ejecutable y para comprobar el estado de datos en pruebas
 // sin tocar PostgreSQL (ADR-07). No es para producción: se pierde al reiniciar.
-import { EvaluacionAnonima, IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
+import { EvaluacionAnonima, EvaluacionRegistrada, IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
 import { IConsultaEvaluaciones } from '../../core/ports/IConsultaEvaluaciones';
 
 export class RepositorioBienestarEnMemoria implements IRepositorioBienestar, IConsultaEvaluaciones {
@@ -14,6 +14,15 @@ export class RepositorioBienestarEnMemoria implements IRepositorioBienestar, ICo
     const id = `mem-${this.secuencia}`;
     this.registros.set(id, { ...evaluacion });
     return id;
+  }
+
+  async buscarPorEstudianteYPartido(idAnonimoHash: string, idPartido: string): Promise<EvaluacionRegistrada | null> {
+    for (const [id, evaluacion] of this.registros) {
+      if (evaluacion.idAnonimoHash === idAnonimoHash && evaluacion.idPartido === idPartido) {
+        return { id, evaluacion: { ...evaluacion } };
+      }
+    }
+    return null;
   }
 
   async buscarPorId(id: string): Promise<EvaluacionAnonima | null> {

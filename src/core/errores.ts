@@ -57,3 +57,11 @@ export class MarcadorInvalidoError extends ErrorDeNegocio {
     this.name = 'MarcadorInvalidoError';
   }
 }
+
+export class EvaluacionYaRegistradaError extends ErrorDeNegocio {
+  readonly codigo = 'EVALUACION_YA_REGISTRADA';
+  constructor(readonly idExistente: string) {
+    super('Ya registraste una autoevaluación distinta para este partido');
+    this.name = 'EvaluacionYaRegistradaError';
+  }
+}

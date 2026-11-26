@@ -6,7 +6,8 @@ import { AnonimizadorDePrueba } from '../../__tests__/dobles/AnonimizadorDePrueb
 
 // Mock del repositorio (Stub simple)
 const mockRepositorio: IRepositorioBienestar = {
-  guardarEvaluacion: async () => 'id-evaluacion-123',
+  buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: async () => 'id-evaluacion-123',
 };
 
 // Mock del validador

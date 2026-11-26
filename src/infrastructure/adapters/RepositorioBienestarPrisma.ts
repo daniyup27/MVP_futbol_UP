@@ -8,7 +8,7 @@
 //  - devuelve el id que asigna la base, así que no hay "éxito" sin escritura;
 //  - traduce la falta de conexión a DependenciaNoDisponibleError;
 //  - no escribe logs: registrar es responsabilidad del envoltorio de observabilidad.
-import { EvaluacionAnonima, IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
+import { EvaluacionAnonima, EvaluacionRegistrada, IRepositorioBienestar } from '../../core/ports/IRepositorioBienestar';
 import { IConsultaEvaluaciones } from '../../core/ports/IConsultaEvaluaciones';
 import { DependenciaNoDisponibleError } from '../../core/errores';
 
@@ -21,6 +21,7 @@ export interface ClienteAutoevaluaciones {
   autoevaluacionBienestar: {
     create(args: { data: EvaluacionAnonima }): Promise<FilaAutoevaluacion>;
     findUnique(args: { where: { id: string } }): Promise<FilaAutoevaluacion | null>;
+    findFirst(args: { where: { idAnonimoHash: string; idPartido: string } }): Promise<FilaAutoevaluacion | null>;
   };
 }
 
@@ -39,6 +40,18 @@ export class RepositorioBienestarPrisma implements IRepositorioBienestar, IConsu
     try {
       const fila = await this.cliente.autoevaluacionBienestar.create({ data: { ...evaluacion } });
       return fila.id;
+    } catch (error) {
+      if (esFaltaDeConexion(error)) throw new DependenciaNoDisponibleError('persistencia', error);
+      throw error;
+    }
+  }
+
+  async buscarPorEstudianteYPartido(idAnonimoHash: string, idPartido: string): Promise<EvaluacionRegistrada | null> {
+    try {
+      const fila = await this.cliente.autoevaluacionBienestar.findFirst({ where: { idAnonimoHash, idPartido } });
+      if (!fila) return null;
+      const { id, ...evaluacion } = fila;
+      return { id, evaluacion };
     } catch (error) {
       if (esFaltaDeConexion(error)) throw new DependenciaNoDisponibleError('persistencia', error);
       throw error;
