@@ -35,7 +35,7 @@
         "src/__tests__/integration/partidoYEvaluacion.test.ts",
         "src/__tests__/http/registrarEvaluacion.http.test.ts",
         "src/__tests__/integration/dependencia-no-disponible.test.ts",
-        "src/__tests__/comparacion/registrarEvaluacion.comparacion.test.ts"
+        "src/__tests__/integration/unicidadEvaluacion.test.ts"
       ],
       "estado": "verificado"
     },

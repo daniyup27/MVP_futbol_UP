@@ -39,3 +39,9 @@ se acepta Transaction Script.
 Si en dos cambios seguidos de este flujo la versión Domain Model necesita más archivos de producción
 que un procedimiento y ninguna de las reglas tocadas es usada por otra operación, se vuelve a evaluar
 pasar el flujo a un script.
+
+## Seguimiento
+- 2026-11-25 (FPI-III-13): se retiran `src/core/bienestar/registrarEvaluacionScript.ts` y
+  `src/__tests__/comparacion/registrarEvaluacion.comparacion.test.ts`. El experimento queda en el
+  historial (commits `c6c4450` a `26e908b`) y en la rama `swiii/g12-script-vs-modelo`. El caso H-02
+  sigue cubierto por `partidoYEvaluacion.test.ts` y `unicidadEvaluacion.test.ts`.
