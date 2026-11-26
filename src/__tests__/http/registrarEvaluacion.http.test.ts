@@ -101,3 +101,33 @@ describe(`POST ${RUTA_EVALUACIONES}`, () => {
     expect(repo.listar()).toHaveLength(0);
   });
 });
+
+describe('Contrato del servicio ante indisponibilidad y reintento (FPI-III-14, bloque A)', () => {
+  it('503 mientras la base está caída; al volver, el reintento responde 201 y un tercer envío igual devuelve el mismo id', async () => {
+    const repo = new RepositorioBienestarEnMemoria();
+    let caida = true;
+    const repoIntermitente: IRepositorioBienestar = {
+      buscarPorEstudianteYPartido: (h, p) =>
+        caida ? Promise.reject(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' })) : repo.buscarPorEstudianteYPartido(h, p),
+      guardarEvaluacion: (e) => repo.guardarEvaluacion(e),
+    };
+    const servidor = montar(repoIntermitente);
+    const enviar = () =>
+      request(servidor)
+        .post(RUTA_EVALUACIONES)
+        .set('x-sub-prueba', 'estudiante-A')
+        .send({ idPartido: 'partido-finalizado', escalaFisica: 4, escalaMental: 3 });
+
+    const durante = await enviar();
+    expect(durante.status).toBe(503);
+    expect(repo.listar()).toHaveLength(0);
+
+    caida = false;
+    const reintento = await enviar();
+    const otraVez = await enviar();
+    expect(reintento.status).toBe(201);
+    expect(otraVez.status).toBe(201);
+    expect(otraVez.body.idEvaluacion).toBe(reintento.body.idEvaluacion);
+    expect(repo.listar()).toHaveLength(1);
+  });
+});
