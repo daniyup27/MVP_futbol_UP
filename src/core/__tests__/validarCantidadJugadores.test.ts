@@ -29,8 +29,8 @@ describe('validarCantidadJugadores', () => {
   });
 
   it('debe lanzar error con tipo de torneo desconocido', () => {
-    expect(() => validarCantidadJugadores(5, 'FUTSAL' as TipoTorneo)).toThrow(
-      'Tipo de torneo desconocido: FUTSAL'
+    expect(() => validarCantidadJugadores(5, 'PLAYA' as TipoTorneo)).toThrow(
+      'Tipo de torneo desconocido: PLAYA'
     );
   });
 });

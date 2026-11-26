@@ -1,0 +1,29 @@
+%% FPI-III-08 · Colaboración entre objetos al finalizar un partido y registrar una evaluación
+sequenceDiagram
+  autonumber
+  participant T as Prueba / caso de uso
+  participant P as :Partido (partido-7)
+  participant M as Marcador
+  participant S as :ServicioBienestar
+  participant V as :ValidadorPartidoEnMemoria
+  participant E as EscalaBienestar
+  participant A as AutoevaluacionBienestar
+  participant R as :RepositorioBienestarEnMemoria
+  T->>P: finalizar(2, 1)
+  P->>P: estado == PROGRAMADO?
+  P->>M: crear(2, 1)
+  M-->>P: marcador válido
+  P->>P: estado = FINALIZADO
+  T->>S: registrarEvaluacion(sub, t-1, partido-7, 5, 1)
+  S->>E: crear(5) y crear(1)
+  S->>V: estaFinalizado(partido-7)
+  V->>P: estaFinalizado()
+  P-->>V: true
+  V-->>S: true
+  S->>A: registrar({hash, partido-7, 5, 1})
+  A->>E: crear(5), crear(1)
+  A-->>S: autoevaluación
+  S->>R: guardarEvaluacion(aRegistro())
+  R-->>S: mem-1
+  S-->>T: mem-1
+  Note over P: Un segundo finalizar() lanza TransicionInvalidaError y el marcador 2-1 no cambia

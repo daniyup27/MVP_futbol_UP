@@ -1,0 +1,35 @@
+// FPI-III-02 · Vista lógica (editable). Generar PNG: dot -Tpng vista-logica.dot -o vista-logica.png
+digraph VistaLogica {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=11, label="MVP Fútbol UP · Vista lógica (monolito modular, ADR-03)", labelloc=t, nodesep=0.5, ranksep=0.55];
+  node  [shape=box, style="rounded,filled", fillcolor="#F4F6F8", fontname="Helvetica", fontsize=10];
+  edge  [fontname="Helvetica", fontsize=9];
+
+  subgraph cluster_pres { label="Presentación (Next.js App Router)"; style=dashed;
+    health [label="api/health\n(route.ts)"];
+    evalApi [label="api/bienestar/evaluaciones\n(contrato OpenAPI, pendiente)", fillcolor="#FFF4E0"];
+  }
+  subgraph cluster_dom { label="Dominio (src/core)"; style=dashed;
+    torneos [label="Torneos\nvalidarCantidadJugadores\nLIMITES_TORNEO"];
+    bienestar [label="Bienestar\nServicioBienestar"];
+    puertoRepo [label="«puerto»\nIRepositorioBienestar", shape=component];
+    puertoVal [label="«puerto»\nIValidadorPartido", shape=component];
+  }
+  subgraph cluster_inf { label="Infraestructura"; style=dashed;
+    adapter [label="RepositorioBienestarPrisma\n(adaptador)"];
+  }
+  subgraph cluster_trans { label="Transversal"; style=dashed;
+    anon [label="anonimizar\n(HMAC-SHA256, ADR-16)"];
+    logger [label="logger (Pino,\nredacción PII)"];
+    otel [label="telemetry/setup\n(OpenTelemetry)"];
+    config [label="tournament.config"];
+  }
+
+  evalApi -> bienestar [label="llamada local"];
+  bienestar -> puertoVal [label="usa"];
+  bienestar -> puertoRepo [label="usa"];
+  bienestar -> anon [label="usa"];
+  adapter -> puertoRepo [label="implementa", style=dashed, arrowhead=onormal];
+  torneos -> config [label="duplica límites\n(deuda)", style=dotted, color="#B54708"];
+  evalApi -> logger [style=dotted];
+  evalApi -> otel [style=dotted];
+}
