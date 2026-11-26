@@ -1,0 +1,38 @@
+{
+  "version": "1.1",
+  "ers": "docs/requisitos/ERS-bienestar-v1.1.md",
+  "requisitos": [
+    {
+      "id": "RF-01",
+      "diseno": "Strategy ReglasTorneo con fuente única en tournament.config (FPI-III-03)",
+      "componentes": ["src/core/validarCantidadJugadores.ts", "src/core/torneos/reglasTorneo.ts", "src/config/tournament.config.ts"],
+      "contrato": "validarCantidadJugadores(cantidad, tipo): void; lanza Error con el rango si no cumple",
+      "pruebas": ["src/core/__tests__/validarCantidadJugadores.test.ts", "src/core/__tests__/caracterizacion.torneos.test.ts", "src/core/__tests__/extension.reglasTorneo.test.ts"],
+      "estado": "verificado"
+    },
+    {
+      "id": "RF-02",
+      "diseno": "D-02: recorrido detallado de registrarEvaluacion (docs/diagramas/D-02-registrar-evaluacion.mmd)",
+      "componentes": ["src/presentation/http/evaluacionesHttp.ts", "src/core/ServicioBienestar.ts", "src/core/dominio/Partido.ts", "src/core/dominio/EscalaBienestar.ts", "src/core/errores.ts"],
+      "contrato": "registrarEvaluacion(idEstudiante, idTorneo, idPartido, escalaFisica, escalaMental): Promise<string> (docs/swiii/G06-contrato-registrar-evaluacion.md)",
+      "pruebas": ["src/core/__tests__/ServicioBienestar.test.ts", "src/__tests__/integration/partidoYEvaluacion.test.ts", "src/__tests__/http/registrarEvaluacion.http.test.ts", "src/__tests__/integration/dependencia-no-disponible.test.ts"],
+      "estado": "verificado"
+    },
+    {
+      "id": "AQ-01",
+      "diseno": "Puerto IAnonimizador con HMAC-SHA256 (ADR-16, FPI-III-07)",
+      "componentes": ["src/core/ports/IAnonimizador.ts", "src/infrastructure/seguridad/AnonimizadorHmac.ts", "src/core/dominio/AutoevaluacionBienestar.ts"],
+      "contrato": "IAnonimizador.generarHash(idEstudiante): string de 64 hex, determinista y sin el identificador",
+      "pruebas": ["src/__tests__/contratos/anonimizador.contrato.test.ts", "src/__tests__/integration/bienestar.integration.test.ts", "src/__tests__/contratos/repositorio.contrato.test.ts", "src/__tests__/http/registrarEvaluacion.http.test.ts"],
+      "estado": "verificado"
+    },
+    {
+      "id": "RF-03",
+      "diseno": "CR-03: invariante de unicidad por (idAnonimoHash, idPartido) y reintento idempotente",
+      "componentes": [],
+      "contrato": "Pendiente: se define al implementar CR-03",
+      "pruebas": [],
+      "estado": "pendiente"
+    }
+  ]
+}
