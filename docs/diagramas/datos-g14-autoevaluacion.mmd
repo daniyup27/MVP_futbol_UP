@@ -1,0 +1,18 @@
+%% FPI-III-14 · Mapa objeto ↔ tabla (Data Mapper) y frontera de escritura
+flowchart LR
+  subgraph Dominio
+    A["AutoevaluacionBienestar<br/>idAnonimoHash · idPartido<br/>escalaFisica · escalaMental · fechaRegistro"]
+  end
+  subgraph Infraestructura
+    M["RepositorioBienestarSql<br/>(Data Mapper)"]
+    C["ClienteSql<br/>query · ejecutarScript · transaccion"]
+  end
+  subgraph PostgreSQL
+    T[("autoevaluacion_bienestar<br/>id_evaluacion PK · id_anonimo_hash CHAR(64)<br/>id_partido · escala_fisica · escala_mental<br/>fecha_registro<br/>UNIQUE (id_anonimo_hash, id_partido)")]
+    S[("schema_migraciones<br/>version PK · nombre · aplicada_en")]
+  end
+  A -- aRegistro() --> M
+  M -- "INSERT ... ON CONFLICT DO NOTHING RETURNING id<br/>(una sentencia, autocommit)" --> C
+  C --> T
+  R["aplicarMigraciones<br/>BEGIN · script NNN · INSERT schema_migraciones · COMMIT"] --> C
+  C --> S

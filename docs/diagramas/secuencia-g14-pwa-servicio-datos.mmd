@@ -1,0 +1,32 @@
+%% FPI-III-14 · Secuencia del flujo de punta a punta con estados de interfaz
+sequenceDiagram
+  autonumber
+  participant F as formularioEvaluacion<br/>(PWA)
+  participant H as evaluacionesHttp
+  participant S as ServicioBienestar
+  participant R as RepositorioBienestarSql
+  participant DB as PostgreSQL
+  F->>F: validarFormulario(entrada)
+  alt forma inválida
+    F-->>F: EDITANDO + errores por campo (no se envía)
+  end
+  F->>H: POST /api/bienestar/evaluaciones
+  H->>S: registrarEvaluacion(...)
+  S->>R: buscarPorEstudianteYPartido(hash, partido)
+  R->>DB: SELECT ... WHERE id_anonimo_hash=$1 AND id_partido=$2
+  alt base caída
+    DB--xR: ECONNREFUSED
+    S-->>H: DependenciaNoDisponibleError → 503
+    H-->>F: PENDIENTE_SINCRONIZACION (se conserva en la cola)
+  end
+  S->>R: guardarEvaluacion(registro)
+  R->>DB: INSERT ... ON CONFLICT DO NOTHING RETURNING id_evaluacion
+  alt otra petición ganó la carrera
+    DB-->>R: 0 filas
+    R-->>S: RegistroConcurrenteError
+    S->>R: buscarPorEstudianteYPartido (de nuevo)
+    S-->>H: id existente (reintento) o EVALUACION_YA_REGISTRADA
+  end
+  DB-->>R: id_evaluacion
+  S-->>H: id → 201
+  H-->>F: REGISTRADA (sale de la cola)

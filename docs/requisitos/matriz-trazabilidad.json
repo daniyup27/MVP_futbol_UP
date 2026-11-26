@@ -35,7 +35,8 @@
         "src/__tests__/integration/partidoYEvaluacion.test.ts",
         "src/__tests__/http/registrarEvaluacion.http.test.ts",
         "src/__tests__/integration/dependencia-no-disponible.test.ts",
-        "src/__tests__/integration/unicidadEvaluacion.test.ts"
+        "src/__tests__/integration/unicidadEvaluacion.test.ts",
+        "src/__tests__/presentacion/formularioEvaluacion.test.ts"
       ],
       "estado": "verificado"
     },
@@ -45,14 +46,16 @@
       "componentes": [
         "src/core/ports/IAnonimizador.ts",
         "src/infrastructure/seguridad/AnonimizadorHmac.ts",
-        "src/core/dominio/AutoevaluacionBienestar.ts"
+        "src/core/dominio/AutoevaluacionBienestar.ts",
+        "db/migraciones/001_crear_autoevaluacion_bienestar.sql"
       ],
       "contrato": "IAnonimizador.generarHash(idEstudiante): string de 64 hex, determinista y sin el identificador",
       "pruebas": [
         "src/__tests__/contratos/anonimizador.contrato.test.ts",
         "src/__tests__/integration/bienestar.integration.test.ts",
         "src/__tests__/contratos/repositorio.contrato.test.ts",
-        "src/__tests__/http/registrarEvaluacion.http.test.ts"
+        "src/__tests__/http/registrarEvaluacion.http.test.ts",
+        "src/__tests__/integration/creacionIncompleta.test.ts"
       ],
       "estado": "verificado"
     },
@@ -63,13 +66,16 @@
         "src/core/dominio/RegistroEvaluacionPartido.ts",
         "src/core/dominio/AutoevaluacionBienestar.ts",
         "src/core/ServicioBienestar.ts",
-        "src/core/ports/IRepositorioBienestar.ts"
+        "src/core/ports/IRepositorioBienestar.ts",
+        "src/infrastructure/adapters/RepositorioBienestarSql.ts",
+        "db/migraciones/001_crear_autoevaluacion_bienestar.sql"
       ],
       "contrato": "registrarEvaluacion devuelve el id existente en un reintento igual; lanza EvaluacionYaRegistradaError (409) si las escalas difieren",
       "pruebas": [
         "src/core/__tests__/dominio/RegistroEvaluacionPartido.test.ts",
         "src/__tests__/integration/unicidadEvaluacion.test.ts",
-        "src/__tests__/contratos/repositorio.contrato.test.ts"
+        "src/__tests__/contratos/repositorio.contrato.test.ts",
+        "src/__tests__/persistencia/persistencia.integracion.test.ts"
       ],
       "estado": "verificado"
     }
