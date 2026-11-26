@@ -94,7 +94,12 @@ export interface DependenciasServidor {
 
 /** Servidor Node mínimo para ejecutar el ejemplo y las pruebas HTTP (sin Next.js). */
 export function crearServidorEvaluaciones(deps: DependenciasServidor): Server {
-  return createServer((req: IncomingMessage, res: ServerResponse) => {
+  return createServer(crearManejadorEvaluaciones(deps));
+}
+
+/** Manejador de peticiones reutilizable por el servidor de producción (FPI-III-15). */
+export function crearManejadorEvaluaciones(deps: DependenciasServidor): (req: IncomingMessage, res: ServerResponse) => void {
+  return (req: IncomingMessage, res: ServerResponse) => {
     const responder = (r: RespuestaHttp) => {
       res.writeHead(r.status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(r.body));
@@ -115,5 +120,5 @@ export function crearServidorEvaluaciones(deps: DependenciasServidor): Server {
       }
       responder(await manejarRegistroEvaluacion(deps.servicio, deps.autenticar(req), body));
     });
-  });
+  };
 }
