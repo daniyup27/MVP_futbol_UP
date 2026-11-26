@@ -21,7 +21,7 @@ const errorConexion = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:54
 });
 
 describe('Enlace dominio → persistencia con base no disponible', () => {
-  const validadorOk: IValidadorPartido = { estaFinalizado: async () => true };
+  const validadorOk: IValidadorPartido = { consultarEstado: async () => 'FINALIZADO' };
 
   it('propaga el error del adaptador y no devuelve id de evaluación', async () => {
     const repositorioCaido: IRepositorioBienestar = {
@@ -42,7 +42,7 @@ describe('Enlace dominio → persistencia con base no disponible', () => {
     const repositorio: IRepositorioBienestar = { buscarPorEstudianteYPartido: async () => null,
     guardarEvaluacion: jest.fn() };
     const validadorCaido: IValidadorPartido = {
-      estaFinalizado: jest.fn().mockRejectedValue(new Error('timeout validador')),
+      consultarEstado: jest.fn().mockRejectedValue(new Error('timeout validador')),
     };
     const servicio = new ServicioBienestar(repositorio, validadorCaido, new AnonimizadorDePrueba());
 

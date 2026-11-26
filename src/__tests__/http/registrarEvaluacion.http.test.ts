@@ -13,7 +13,7 @@ import { crearServidorEvaluaciones, RUTA_EVALUACIONES } from '../../presentation
 
 // Autenticación de prueba: en producción el sub sale del JWT verificado.
 const autenticarPrueba = (req: IncomingMessage) => (req.headers['x-sub-prueba'] as string) ?? null;
-const validador: IValidadorPartido = { estaFinalizado: async (id) => id === 'partido-finalizado' };
+const validador: IValidadorPartido = { consultarEstado: async (id) => (id === 'partido-finalizado' ? 'FINALIZADO' : 'PROGRAMADO') };
 
 function montar(repositorio: IRepositorioBienestar) {
   const servicio = crearServicioBienestar({ repositorio, validador });
@@ -69,7 +69,7 @@ describe(`POST ${RUTA_EVALUACIONES}`, () => {
 
   it('rechazo por regla: escala fuera de 1..5 responde 400 sin consultar el validador', async () => {
     const repo = new RepositorioBienestarEnMemoria();
-    const validadorEspia: IValidadorPartido = { estaFinalizado: jest.fn().mockResolvedValue(true) };
+    const validadorEspia: IValidadorPartido = { consultarEstado: jest.fn().mockResolvedValue('FINALIZADO') };
     const servidor = crearServidorEvaluaciones({
       servicio: crearServicioBienestar({ repositorio: repo, validador: validadorEspia }),
       autenticar: autenticarPrueba,
@@ -81,7 +81,7 @@ describe(`POST ${RUTA_EVALUACIONES}`, () => {
 
     expect(res.status).toBe(400);
     expect(res.body.codigo).toBe('DATOS_INVALIDOS');
-    expect(validadorEspia.estaFinalizado).not.toHaveBeenCalled();
+    expect(validadorEspia.consultarEstado).not.toHaveBeenCalled();
     expect(repo.listar()).toHaveLength(0);
   });
 

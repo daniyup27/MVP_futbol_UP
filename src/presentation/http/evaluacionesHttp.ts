@@ -8,6 +8,7 @@ import {
   DependenciaNoDisponibleError,
   ErrorDeNegocio,
   EvaluacionYaRegistradaError,
+  PartidoNoEncontradoError,
   PartidoNoFinalizadoError,
 } from '../../core/errores';
 
@@ -65,6 +66,9 @@ export async function manejarRegistroEvaluacion(
     );
     return { status: 201, body: { idEvaluacion, mensaje: 'Evaluación registrada correctamente.' } };
   } catch (error) {
+    if (error instanceof PartidoNoEncontradoError) {
+      return { status: 404, body: { codigo: error.codigo, mensaje: error.message } };
+    }
     if (error instanceof PartidoNoFinalizadoError || error instanceof EvaluacionYaRegistradaError) {
       return { status: 409, body: { codigo: error.codigo, mensaje: error.message } };
     }

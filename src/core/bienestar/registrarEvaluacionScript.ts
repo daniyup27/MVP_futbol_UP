@@ -35,13 +35,13 @@ export async function registrarEvaluacionScript(
   }
 
   // Regla 2: solo partidos finalizados
-  let finalizado: boolean;
+  let estado: string;
   try {
-    finalizado = await deps.validador.estaFinalizado(idPartido);
+    estado = await deps.validador.consultarEstado(idPartido);
   } catch (error) {
     throw new DependenciaNoDisponibleError('validador-partidos', error);
   }
-  if (!finalizado) throw new PartidoNoFinalizadoError(idPartido);
+  if (estado !== 'FINALIZADO') throw new PartidoNoFinalizadoError(idPartido);
 
   // Regla 3: seudonimización (ADR-16)
   const idAnonimoHash = deps.anonimizador.generarHash(idEstudiante);

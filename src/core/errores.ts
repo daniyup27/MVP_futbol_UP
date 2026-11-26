@@ -65,3 +65,11 @@ export class EvaluacionYaRegistradaError extends ErrorDeNegocio {
     this.name = 'EvaluacionYaRegistradaError';
   }
 }
+
+export class PartidoNoEncontradoError extends ErrorDeNegocio {
+  readonly codigo = 'PARTIDO_NO_ENCONTRADO';
+  constructor(readonly idPartido: string) {
+    super('El partido indicado no existe');
+    this.name = 'PartidoNoEncontradoError';
+  }
+}

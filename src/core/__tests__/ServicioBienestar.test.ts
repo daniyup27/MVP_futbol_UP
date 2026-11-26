@@ -12,7 +12,7 @@ const mockRepositorio: IRepositorioBienestar = {
 
 // Mock del validador
 const mockValidador: IValidadorPartido = {
-  estaFinalizado: async (id: string) => id === 'partido-finalizado',
+  consultarEstado: async (id: string) => (id === 'partido-finalizado' ? 'FINALIZADO' : 'PROGRAMADO'),
 };
 
 // FPI-III-07: antes se usaba jest.mock con un hash constante ('a' x 64), que no cumple

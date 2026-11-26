@@ -37,10 +37,10 @@ export class ServicioBienestar {
     EscalaBienestar.crear(escalaMental, 'escalaMental');
 
     // 2. Regla de negocio: solo se evalúa partido finalizado
-    const partidoFinalizado = await this.consultar('validador-partidos', () =>
-      this.validador.estaFinalizado(idPartido)
+    const estadoPartido = await this.consultar('validador-partidos', () =>
+      this.validador.consultarEstado(idPartido)
     );
-    if (!partidoFinalizado) {
+    if (estadoPartido !== 'FINALIZADO') {
       throw new PartidoNoFinalizadoError(idPartido);
     }
 

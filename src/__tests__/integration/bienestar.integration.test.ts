@@ -29,9 +29,9 @@ const mockRepositorio: IRepositorioBienestar = {
 
 // Mock del validador de partido (Stub)
 const mockValidador: IValidadorPartido = {
-  estaFinalizado: jest.fn().mockImplementation(async (idPartido: string) => {
+  consultarEstado: jest.fn().mockImplementation(async (idPartido: string) => {
     // Simula la lógica de negocio: solo partidos finalizados pueden evaluarse
-    return idPartido === 'partido-finalizado';
+    return idPartido === 'partido-finalizado' ? 'FINALIZADO' : 'PROGRAMADO';
   }),
 };
 
