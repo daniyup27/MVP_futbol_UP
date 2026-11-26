@@ -1,0 +1,44 @@
+%% FPI-III-11 · Contexto de Bienestar: límite de consistencia
+classDiagram
+  direction LR
+  namespace Agregado_RegistroEvaluacionPartido {
+    class RegistroEvaluacionPartido {
+      <<raíz del agregado>>
+      +idAnonimoHash
+      +idPartido
+      +estado: SIN_EVALUACION | EVALUADO
+      +registrar(nueva) ResultadoRegistro
+    }
+    class AutoevaluacionBienestar {
+      <<entidad>>
+      +escalaFisica: EscalaBienestar
+      +escalaMental: EscalaBienestar
+      +mismasRespuestas(otra) boolean
+    }
+    class EscalaBienestar {
+      <<objeto de valor>>
+      +valor: 1..5
+    }
+  }
+  namespace Agregado_Partido {
+    class Partido {
+      <<raíz del agregado>>
+      +id
+      +estado: PROGRAMADO | FINALIZADO
+      +finalizar(gL, gV)
+      +estaFinalizado()
+    }
+    class Marcador {
+      <<objeto de valor>>
+    }
+  }
+  class ServicioBienestar {
+    <<servicio de aplicación>>
+    carga, invoca y persiste
+  }
+  RegistroEvaluacionPartido "1" o-- "0..1" AutoevaluacionBienestar
+  AutoevaluacionBienestar *-- "2" EscalaBienestar
+  Partido *-- "0..1" Marcador
+  RegistroEvaluacionPartido ..> Partido : solo idPartido (sin referencia)
+  ServicioBienestar --> RegistroEvaluacionPartido : registrar()
+  ServicioBienestar ..> Partido : consulta estaFinalizado() vía IValidadorPartido

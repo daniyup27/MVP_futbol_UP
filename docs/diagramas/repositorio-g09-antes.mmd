@@ -1,0 +1,20 @@
+%% FPI-III-09 · Persistencia ANTES (hasta swiii/g08-modelo-dominio)
+classDiagram
+  direction LR
+  class IRepositorioBienestar {
+    <<interface>>
+    +guardarEvaluacion(e) Promise~string~
+  }
+  class RepositorioBienestarPrisma {
+    -dbClient: any
+    +guardarEvaluacion(e) Promise~string~
+  }
+  note for RepositorioBienestarPrisma "No usa dbClient. Devuelve db-id-Date.now() y hace console.log del hash"
+  class RepositorioBienestarEnMemoria {
+    +guardarEvaluacion(e) Promise~string~
+    +listar()
+  }
+  class ServicioBienestar
+  ServicioBienestar --> IRepositorioBienestar
+  RepositorioBienestarPrisma ..|> IRepositorioBienestar
+  RepositorioBienestarEnMemoria ..|> IRepositorioBienestar

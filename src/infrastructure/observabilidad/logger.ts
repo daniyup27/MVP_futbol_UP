@@ -1,4 +1,4 @@
-// src/core/logger.ts
+// src/infrastructure/observabilidad/logger.ts
 import pino from 'pino';
 
 /**
