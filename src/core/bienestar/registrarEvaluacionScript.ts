@@ -11,6 +11,7 @@ import {
   DependenciaNoDisponibleError,
   ErrorDeNegocio,
   EvaluacionYaRegistradaError,
+  PartidoNoEncontradoError,
   PartidoNoFinalizadoError,
 } from '../errores';
 
@@ -41,6 +42,7 @@ export async function registrarEvaluacionScript(
   } catch (error) {
     throw new DependenciaNoDisponibleError('validador-partidos', error);
   }
+  if (estado === 'NO_EXISTE') throw new PartidoNoEncontradoError(idPartido); // H-02
   if (estado !== 'FINALIZADO') throw new PartidoNoFinalizadoError(idPartido);
 
   // Regla 3: seudonimización (ADR-16)
