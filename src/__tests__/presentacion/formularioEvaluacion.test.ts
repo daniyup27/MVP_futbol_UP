@@ -79,4 +79,18 @@ describe('Formulario de autoevaluación (presentación)', () => {
   it('un error interno no promete reintento automático', () => {
     expect(estadoTrasEnvio({ status: 500, body: { codigo: 'ERROR_INTERNO' } })).toMatchObject({ tipo: 'ERROR', conservarEnCola: false });
   });
+  it('sesión vencida (401): la evaluación se conserva en la cola y se envía después de iniciar sesión', async () => {
+    const repositorio = new RepositorioBienestarEnMemoria();
+    const servidor = servidorCon(repositorio);
+    const datos = { idPartido: 'partido-7', escalaFisica: 4, escalaMental: 3 };
+
+    const sinToken = await request(servidor).post(RUTA_EVALUACIONES).send(datos);
+    const estado = estadoTrasEnvio({ status: sinToken.status, body: sinToken.body });
+    expect(estado).toMatchObject({ tipo: 'REQUIERE_SESION', conservarEnCola: true });
+    expect(repositorio.listar()).toHaveLength(0);
+
+    const conToken = await request(servidor).post(RUTA_EVALUACIONES).set('x-sub-prueba', 'estudiante-A').send(datos);
+    expect(estadoTrasEnvio({ status: conToken.status, body: conToken.body }).tipo).toBe('REGISTRADA');
+    expect(repositorio.listar()).toHaveLength(1);
+  });
 });

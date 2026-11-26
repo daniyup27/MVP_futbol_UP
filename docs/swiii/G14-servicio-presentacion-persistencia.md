@@ -25,6 +25,10 @@ igual devuelve el mismo id» en `src/__tests__/http/registrarEvaluacion.http.tes
 `estadoTrasEnvio` (estado de interfaz y si la evaluación sigue en la cola offline).
 Pruebas: `src/__tests__/presentacion/formularioEvaluacion.test.ts`.
 
+Corrección después de contrastar con la Tabla 4 del Taller de arquitectura: un 401 (sesión vencida)
+no es un rechazo. La evaluación se conserva en la cola (`REQUIERE_SESION`) y se envía cuando el
+estudiante vuelve a iniciar sesión.
+
 ## Bloque C · Esquema versionado y Data Mapper
 - Migración `db/migraciones/001_crear_autoevaluacion_bienestar.sql` (CHECK de formato del seudónimo,
   CHECK de escalas 1..5, UNIQUE (id_anonimo_hash, id_partido)).

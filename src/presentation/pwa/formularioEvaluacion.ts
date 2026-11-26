@@ -15,6 +15,7 @@ export type EstadoFormulario =
   | { tipo: 'EDITANDO'; errores: Partial<Record<'idPartido' | 'escalaFisica' | 'escalaMental', string>> }
   | { tipo: 'REGISTRADA'; mensaje: string; idEvaluacion: string; conservarEnCola: false }
   | { tipo: 'PENDIENTE_SINCRONIZACION'; mensaje: string; conservarEnCola: true }
+  | { tipo: 'REQUIERE_SESION'; mensaje: string; conservarEnCola: true }
   | { tipo: 'RECHAZADA'; mensaje: string; conservarEnCola: false }
   | { tipo: 'ERROR'; mensaje: string; conservarEnCola: false };
 
@@ -54,6 +55,15 @@ export function estadoTrasEnvio(respuesta: RespuestaHttp | 'SIN_RED'): EstadoFor
     };
   }
   const codigo = respuesta.body.codigo;
+  // Taller de arquitectura, Tabla 4: con el token vencido la evaluación sigue en la cola local
+  // hasta que el estudiante vuelva a autenticarse. No es un rechazo: no se pierde lo que escribió.
+  if (respuesta.status === 401) {
+    return {
+      tipo: 'REQUIERE_SESION',
+      mensaje: 'Tu sesión venció. Guardamos tu autoevaluación y la enviaremos cuando vuelvas a iniciar sesión.',
+      conservarEnCola: true,
+    };
+  }
   if (respuesta.status === 201) {
     return {
       tipo: 'REGISTRADA',
@@ -69,7 +79,6 @@ export function estadoTrasEnvio(respuesta: RespuestaHttp | 'SIN_RED'): EstadoFor
     PARTIDO_NO_FINALIZADO: 'Este partido todavía no ha terminado. Podrás evaluarlo cuando finalice.',
     PARTIDO_NO_ENCONTRADO: 'No encontramos ese partido. Revisa que sea el correcto.',
     EVALUACION_YA_REGISTRADA: 'Ya registraste una autoevaluación distinta para este partido.',
-    NO_AUTENTICADO: 'Tu sesión venció. Vuelve a iniciar sesión para enviar la autoevaluación.',
   };
   if (typeof codigo === 'string' && rechazos[codigo]) {
     return { tipo: 'RECHAZADA', mensaje: rechazos[codigo], conservarEnCola: false };
