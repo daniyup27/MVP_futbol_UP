@@ -1,0 +1,58 @@
+%% FPI-III-08 · Modelo de dominio implementado (rama swiii/g08-modelo-dominio)
+classDiagram
+  direction LR
+  class Partido {
+    <<entidad>>
+    +id: string
+    -estado: EstadoPartido
+    -marcador: Marcador | null
+    +programado(id)$ Partido
+    +finalizar(golesLocal, golesVisitante) void
+    +estaFinalizado() boolean
+    +mismaIdentidad(otro) boolean
+  }
+  class Marcador {
+    <<objeto de valor>>
+    +golesLocal: entero >= 0
+    +golesVisitante: entero >= 0
+    +crear(golesLocal, golesVisitante)$ Marcador
+    +equals(otro) boolean
+  }
+  class AutoevaluacionBienestar {
+    <<entidad>>
+    +idAnonimoHash: string
+    +idPartido: string
+    +escalaFisica: EscalaBienestar
+    +escalaMental: EscalaBienestar
+    +fechaRegistro: Date
+    +registrar(datos)$ AutoevaluacionBienestar
+    +aRegistro() EvaluacionAnonima
+  }
+  class EscalaBienestar {
+    <<objeto de valor>>
+    +valor: entero 1..5
+    +crear(valor, nombre)$ EscalaBienestar
+    +equals(otra) boolean
+  }
+  class EstadoPartido {
+    <<enumeración>>
+    PROGRAMADO
+    FINALIZADO
+  }
+  class ServicioBienestar {
+    <<servicio de aplicación>>
+    +registrarEvaluacion(...) Promise~string~
+  }
+  class IValidadorPartido {
+    <<interface>>
+    +estaFinalizado(idPartido) Promise~boolean~
+  }
+  class ValidadorPartidoEnMemoria
+  Partido "1" *-- "0..1" Marcador
+  Partido --> EstadoPartido
+  AutoevaluacionBienestar "1" *-- "2" EscalaBienestar
+  Partido "1" .. "0..*" AutoevaluacionBienestar : idPartido
+  ServicioBienestar ..> AutoevaluacionBienestar : crea
+  ServicioBienestar --> IValidadorPartido
+  ValidadorPartidoEnMemoria ..|> IValidadorPartido
+  ValidadorPartidoEnMemoria --> Partido : estaFinalizado()

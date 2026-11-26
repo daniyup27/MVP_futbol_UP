@@ -48,5 +48,9 @@
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
     ]
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.10.0",
+    "pino": "^10.4.0"
   }
 }
