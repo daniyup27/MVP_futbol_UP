@@ -1,0 +1,27 @@
+# Blueprint de Render (FPI-III-16 · ADR-18). Describe el servicio web Docker y la base.
+# Los secretos no se versionan: Render los pide al crear el Blueprint (sync: false).
+services:
+  - type: web
+    name: mvp-futbol-up
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mvp-futbol-up-db
+          property: connectionString
+      - key: ANONIMIZATION_SALT
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PARTIDOS_FINALIZADOS
+        sync: false
+
+databases:
+  - name: mvp-futbol-up-db
+    plan: free
+    databaseName: futbol_up
+    user: futbol_user
+    postgresMajorVersion: '16'
