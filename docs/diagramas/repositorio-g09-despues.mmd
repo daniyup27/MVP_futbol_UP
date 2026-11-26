@@ -1,0 +1,46 @@
+%% FPI-III-09 · Persistencia DESPUÉS (rama swiii/g09-contrato-repositorio)
+classDiagram
+  direction TB
+  class IRepositorioBienestar {
+    <<interface>>
+    +guardarEvaluacion(e) Promise~string~
+  }
+  class IConsultaEvaluaciones {
+    <<interface>>
+    +buscarPorId(id) Promise~EvaluacionAnonima|null~
+  }
+  class ClienteAutoevaluaciones {
+    <<interface>>
+    +autoevaluacionBienestar.create(data)
+    +autoevaluacionBienestar.findUnique(where)
+  }
+  class RepositorioBienestarPrisma {
+    -cliente: ClienteAutoevaluaciones
+    +guardarEvaluacion(e) Promise~string~
+    +buscarPorId(id)
+  }
+  class RepositorioBienestarEnMemoria {
+    +guardarEvaluacion(e) Promise~string~
+    +buscarPorId(id)
+  }
+  class PrismaClient {
+    <<real, cuando se instale>>
+  }
+  class ClientePrismaFalso {
+    <<doble de prueba>>
+  }
+  class ServicioBienestar
+  class ContratoRepositorio {
+    <<prueba compartida>>
+    incumplimientosDelContrato(repo)
+  }
+  ServicioBienestar --> IRepositorioBienestar : solo escribe
+  RepositorioBienestarPrisma ..|> IRepositorioBienestar
+  RepositorioBienestarPrisma ..|> IConsultaEvaluaciones
+  RepositorioBienestarEnMemoria ..|> IRepositorioBienestar
+  RepositorioBienestarEnMemoria ..|> IConsultaEvaluaciones
+  RepositorioBienestarPrisma --> ClienteAutoevaluaciones : Prisma usa solo create y findUnique
+  PrismaClient ..|> ClienteAutoevaluaciones
+  ClientePrismaFalso ..|> ClienteAutoevaluaciones
+  ContratoRepositorio ..> RepositorioBienestarPrisma
+  ContratoRepositorio ..> RepositorioBienestarEnMemoria
