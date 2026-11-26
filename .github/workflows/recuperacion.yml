@@ -1,0 +1,123 @@
+name: Recuperación y reversión - MVP Fútbol UP
+
+# FPI-III-16 · Ejecuta el procedimiento de docs/despliegue/procedimiento-despliegue.md en el runner:
+# despliegue desde la imagen versionada, operación nominal, respaldo, pérdida total de la base,
+# restauración medida (RTO), reenvío de la cola offline y reversión de una configuración defectuosa.
+# Secretos sintéticos generados en cada ejecución. El respaldo no se sube como artefacto.
+on:
+  push:
+    branches: ['swiii/g16-*']
+  workflow_dispatch:
+
+jobs:
+  recuperacion:
+    name: Salud, operación, restauración y reversión
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: 1. Configuración sintética y versión
+        run: |
+          VERSION="$(node -p "require('./package.json').version")-${GITHUB_SHA::7}"
+          {
+            echo "APP_VERSION=${VERSION}"
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "ANONIMIZATION_SALT=$(openssl rand -hex 32)"
+            echo "JWT_SECRET=$(openssl rand -hex 32)"
+            echo "PARTIDOS_FINALIZADOS=partido-demo-1"
+          } > .env
+          echo "APP_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          cat > esperar_salud.sh <<'SH'
+          #!/bin/bash
+          # uso: esperar_salud.sh SEGUNDOS ; imprime el cuerpo de /api/health o sale con 1
+          for i in $(seq 1 "$1"); do
+            if curl -fs "$BASE_URL/api/health"; then echo; exit 0; fi
+            sleep 1
+          done
+          exit 1
+          SH
+          chmod +x esperar_salud.sh
+          cat > contar.sh <<'SH'
+          #!/bin/bash
+          docker compose exec -T db psql -U futbol_user -d futbol_up -tAc "SELECT count(*) FROM autoevaluacion_bienestar"
+          SH
+          chmod +x contar.sh
+          echo "Versión: ${VERSION}"
+
+      - name: 2. Construir imagen y desplegar
+        run: |
+          docker compose build app
+          docker image inspect "mvp-futbol-up:${APP_VERSION}" --format 'Imagen {{index .RepoTags 0}} Id {{.Id}}'
+          T0=$(date +%s%N)
+          docker compose up -d
+          ./esperar_salud.sh 60
+          echo "Despliegue inicial: salud 200 en $(( ($(date +%s%N) - T0) / 1000000 )) ms"
+
+      - name: 3. Operación nominal (50 autoevaluaciones)
+        run: |
+          set -a; . ./.env; set +a
+          TOTAL=50 CONCURRENCIA=5 PARTIDO=partido-demo-1 PREFIJO=antes ETIQUETA=nominal node scripts/carga.mjs
+          echo "Filas: $(./contar.sh)"
+
+      - name: 4. Respaldo lógico (pg_dump)
+        run: |
+          docker compose exec -T db pg_dump -U futbol_user -d futbol_up -Fc > respaldo.dump
+          echo "Respaldo: $(stat -c %s respaldo.dump) bytes, filas respaldadas: $(./contar.sh), hora $(date -u +%H:%M:%S)"
+
+      - name: 5. Cinco autoevaluaciones después del respaldo
+        run: |
+          set -a; . ./.env; set +a
+          TOTAL=5 CONCURRENCIA=1 PARTIDO=partido-demo-1 PREFIJO=despues ETIQUETA=despues node scripts/carga.mjs
+          echo "Filas antes de la falla: $(./contar.sh)"
+
+      - name: 6. Falla simulada - se pierden contenedores y volumen de datos
+        run: |
+          docker compose down -v
+          docker volume ls --format '{{.Name}}' | grep postgres_data || echo "Volumen de datos eliminado"
+
+      - name: 7. Restauración (RTO medido)
+        run: |
+          T0=$(date +%s%N)
+          docker compose up -d db
+          until docker compose exec -T db pg_isready -U futbol_user -d futbol_up >/dev/null 2>&1; do sleep 1; done
+          docker compose exec -T db pg_restore -U futbol_user -d futbol_up --no-owner < respaldo.dump
+          docker compose up -d app
+          ./esperar_salud.sh 60
+          echo "Restauración completa en $(( ($(date +%s%N) - T0) / 1000000 )) ms"
+          echo "Filas después de restaurar: $(./contar.sh)"
+          docker compose logs app | grep arranque
+
+      - name: 8. Verificación tras restaurar
+        run: |
+          set -a; . ./.env; set +a
+          echo "Reintento de una evaluación respaldada (mismas escalas):"
+          TOTAL=1 CONCURRENCIA=1 PARTIDO=partido-demo-1 PREFIJO=antes ETIQUETA=reintento-restaurado node scripts/carga.mjs
+          echo "Filas: $(./contar.sh)"
+          echo "La cola offline reenvía las 5 posteriores al respaldo:"
+          TOTAL=5 CONCURRENCIA=1 PARTIDO=partido-demo-1 PREFIJO=despues ETIQUETA=reenvio-cola node scripts/carga.mjs
+          echo "Filas: $(./contar.sh)"
+
+      - name: 9. Despliegue defectuoso y reversión
+        run: |
+          echo "Nueva configuración con ANONIMIZATION_SALT corta:"
+          ANONIMIZATION_SALT=corta docker compose up -d --force-recreate app
+          if ./esperar_salud.sh 20; then echo "ERROR: la configuración defectuosa respondió salud 200"; exit 1; fi
+          echo "Salud no responde tras 20 s; log del arranque:"
+          docker compose logs app | grep arranque_fallido | tail -1
+          T0=$(date +%s%N)
+          docker compose up -d --force-recreate app
+          ./esperar_salud.sh 60
+          echo "Reversión a la configuración anterior: salud 200 en $(( ($(date +%s%N) - T0) / 1000000 )) ms"
+          echo "Filas: $(./contar.sh)"
+
+      - name: Apagar y borrar el respaldo
+        if: always()
+        run: |
+          docker compose down -v
+          rm -f respaldo.dump .env

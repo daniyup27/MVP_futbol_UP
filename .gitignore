@@ -20,3 +20,6 @@ Thumbs.db
 
 # Cobertura de pruebas
 coverage/
+
+# Build del servidor Node (FPI-III-15)
+dist/

@@ -1,0 +1,19 @@
+// FPI-III-16 · Diagrama de despliegue (ADR-18)
+digraph despliegue {
+  rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", fontsize=11]; edge [fontname="Helvetica", fontsize=10];
+  subgraph cluster_cel { label="Teléfono del estudiante"; style=rounded; color="#7a8a99";
+    pwa [shape=box, style="rounded,filled", fillcolor="#eef3f8", label="PWA\n(cola offline en IndexedDB)"]; }
+  subgraph cluster_render { label="Render (PaaS) · el proveedor opera host, SO, red y TLS"; style=rounded; color="#2f6f4f";
+    subgraph cluster_web { label="Web service (contenedor)"; style=dashed; color="#2f6f4f";
+      app [shape=box3d, style=filled, fillcolor="#e3f1e8", label="mvp-futbol-up:<versión>\nnode dist/composicion/main.js\n/api/health · /api/bienestar/evaluaciones"]; }
+    db [shape=cylinder, style=filled, fillcolor="#e3f1e8", label="Render Postgres 16\nautoevaluacion_bienestar\nschema_migraciones"];
+    env [shape=note, style=filled, fillcolor="#fff7e0", label="Variables de entorno\nDATABASE_URL · ANONIMIZATION_SALT\nJWT_SECRET (las define el equipo)"]; }
+  subgraph cluster_gh { label="GitHub"; style=rounded; color="#555555";
+    repo [shape=folder, label="Repositorio\nDockerfile · render.yaml\ndb/migraciones"];
+    ci [shape=component, label="Actions\nCI · entorno reproducible\nrecuperación"]; }
+  pwa -> app [label="HTTPS + JWT"];
+  app -> db [label="SQL (pg)"];
+  env -> app [style=dotted];
+  repo -> ci [label="push"];
+  ci -> app [label="deploy (webhook, ADR-11)", style=dashed];
+}

@@ -1,0 +1,97 @@
+name: Entorno reproducible - MVP Fútbol UP
+
+# FPI-III-15 · Levanta la imagen del servidor y PostgreSQL 16 con docker compose en el runner,
+# verifica salud y ejecuta dos condiciones de carga. Todos los secretos son sintéticos y se
+# generan en cada ejecución; no se usan GitHub Secrets ni datos reales.
+on:
+  push:
+    branches: ['swiii/g15-*', 'swiii/g16-*']
+  workflow_dispatch:
+
+jobs:
+  entorno:
+    name: Despliegue en contenedores, salud y carga
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Recursos del runner
+        run: |
+          echo "vCPU: $(nproc)"; free -m | awk '/Mem:/ {print "RAM MB: " $2}'
+          docker --version; docker compose version
+
+      - name: Generar configuración sintética (.env no versionado)
+        run: |
+          VERSION="$(node -p "require('./package.json').version")-${GITHUB_SHA::7}"
+          {
+            echo "APP_VERSION=${VERSION}"
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "ANONIMIZATION_SALT=$(openssl rand -hex 32)"
+            echo "JWT_SECRET=$(openssl rand -hex 32)"
+            echo "PARTIDOS_FINALIZADOS=partido-demo-1,partido-demo-2"
+          } > .env
+          echo "APP_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Versión desplegada: ${VERSION}"
+
+      - name: Construir la imagen
+        run: |
+          T0=$(date +%s)
+          docker compose build app
+          echo "Imagen mvp-futbol-up:${APP_VERSION} construida en $(( $(date +%s) - T0 )) s"
+          docker image inspect "mvp-futbol-up:${APP_VERSION}" --format 'Id: {{.Id}}  Tamaño: {{.Size}} bytes'
+
+      - name: Levantar base y servidor, esperar salud
+        run: |
+          T0=$(date +%s%N)
+          docker compose up -d
+          for i in $(seq 1 60); do
+            if curl -fs http://localhost:3000/api/health > /tmp/salud.json; then break; fi
+            sleep 1
+          done
+          echo "Salud: $(cat /tmp/salud.json)"
+          echo "Tiempo desde 'up' hasta salud 200: $(( ($(date +%s%N) - T0) / 1000000 )) ms"
+          docker compose logs app | grep arranque
+
+      - name: Carga nominal (200 autoevaluaciones, 5 simultáneas)
+        run: |
+          set -a; . ./.env; set +a
+          BASE_URL=http://localhost:3000 TOTAL=200 CONCURRENCIA=5 PARTIDO=partido-demo-1 PREFIJO=nominal ETIQUETA=nominal \
+            node scripts/carga.mjs | tee carga-nominal.json
+
+      - name: Carga alta (1000 autoevaluaciones, 50 simultáneas)
+        run: |
+          set -a; . ./.env; set +a
+          BASE_URL=http://localhost:3000 TOTAL=1000 CONCURRENCIA=50 PARTIDO=partido-demo-2 PREFIJO=alta ETIQUETA=alta \
+            node scripts/carga.mjs | tee carga-alta.json
+
+      - name: Estado final en la base
+        run: |
+          docker compose exec -T db psql -U futbol_user -d futbol_up -c \
+            "SELECT id_partido, count(*) AS filas, count(DISTINCT id_anonimo_hash) AS estudiantes FROM autoevaluacion_bienestar GROUP BY id_partido ORDER BY id_partido;"
+          docker compose exec -T db psql -U futbol_user -d futbol_up -c "SELECT version, nombre FROM schema_migraciones;"
+
+      - name: Uso de recursos de los contenedores
+        run: docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}'
+
+      - name: Logs del servidor (sin datos personales)
+        if: always()
+        run: docker compose logs app | tail -20
+
+      - name: Guardar resultados de carga
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-carga
+          path: carga-*.json
+          if-no-files-found: ignore
+
+      - name: Apagar
+        if: always()
+        run: docker compose down -v

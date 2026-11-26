@@ -1,0 +1,32 @@
+%% D-02 · Diseño detallado de RF-02 y AQ-01 (ERS v1.0) · rama swiii/g10-requisitos-trazabilidad
+sequenceDiagram
+  autonumber
+  participant H as evaluacionesHttp<br/>(presentación)
+  participant S as ServicioBienestar<br/>(aplicación)
+  participant E as EscalaBienestar<br/>(valor)
+  participant V as IValidadorPartido
+  participant P as Partido<br/>(entidad)
+  participant A as IAnonimizador<br/>(AnonimizadorHmac)
+  participant AU as AutoevaluacionBienestar
+  participant R as IRepositorioBienestar
+  H->>H: forma del cuerpo, sin idEstudiante/cedula/nombre (AQ-01)
+  H->>S: registrarEvaluacion(sub, idTorneo, idPartido, ef, em)
+  S->>E: crear(ef), crear(em) [RF-02: enteros 1..5]
+  alt escala inválida
+    E-->>H: DatosEvaluacionInvalidosError → 400
+  end
+  S->>V: estaFinalizado(idPartido)
+  V->>P: estaFinalizado()
+  alt no finalizado o inexistente
+    V-->>S: false
+    S-->>H: PartidoNoFinalizadoError → 409
+  else validador falla
+    V--xS: error
+    S-->>H: DependenciaNoDisponibleError → 503
+  end
+  S->>A: generarHash(sub) [AQ-01: HMAC-SHA256, 64 hex]
+  S->>AU: registrar({hash, idPartido, ef, em})
+  AU-->>S: aRegistro() sin idEstudiante
+  S->>R: guardarEvaluacion(registro)
+  R-->>S: id
+  S-->>H: id → 201 {idEvaluacion, mensaje}

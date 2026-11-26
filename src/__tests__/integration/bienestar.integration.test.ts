@@ -13,11 +13,13 @@
 import { ServicioBienestar } from '../../core/ServicioBienestar';
 import { IRepositorioBienestar, EvaluacionAnonima } from '../../core/ports/IRepositorioBienestar';
 import { IValidadorPartido } from '../../core/ports/IValidadorPartido';
+import { AnonimizadorHmac } from '../../infrastructure/seguridad/AnonimizadorHmac';
 
 // Mock del repositorio (Stub simple)
 // Simula el adaptador de Prisma sin tocar la BD real
 const mockRepositorio: IRepositorioBienestar = {
-  guardarEvaluacion: jest.fn().mockImplementation(async (evaluacion: EvaluacionAnonima) => {
+  buscarPorEstudianteYPartido: async () => null,
+    guardarEvaluacion: jest.fn().mockImplementation(async (evaluacion: EvaluacionAnonima) => {
     // Simula el comportamiento del adaptador Prisma:
     // - Acepta la evaluación anonimada
     // - Retorna un ID de base de datos ficticio
@@ -27,9 +29,9 @@ const mockRepositorio: IRepositorioBienestar = {
 
 // Mock del validador de partido (Stub)
 const mockValidador: IValidadorPartido = {
-  estaFinalizado: jest.fn().mockImplementation(async (idPartido: string) => {
+  consultarEstado: jest.fn().mockImplementation(async (idPartido: string) => {
     // Simula la lógica de negocio: solo partidos finalizados pueden evaluarse
-    return idPartido === 'partido-finalizado';
+    return idPartido === 'partido-finalizado' ? 'FINALIZADO' : 'PROGRAMADO';
   }),
 };
 
@@ -39,7 +41,7 @@ describe('Integración: Módulo de Bienestar (ADR-07)', () => {
   beforeEach(() => {
     // Reinicia los mocks antes de cada prueba
     jest.clearAllMocks();
-    servicio = new ServicioBienestar(mockRepositorio, mockValidador);
+    servicio = new ServicioBienestar(mockRepositorio, mockValidador, AnonimizadorHmac.desdeEntorno());
   });
 
   describe('POST /bienestar/evaluaciones - Flujo completo', () => {

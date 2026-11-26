@@ -1,5 +1,9 @@
 version: '3.9'
 
+# MVP Fútbol UP · entorno reproducible (FPI-III-15)
+# Los valores sensibles salen de un archivo .env que no se versiona. Ejemplo de variables:
+# POSTGRES_PASSWORD, ANONIMIZATION_SALT (32+ caracteres), JWT_SECRET (32+), APP_VERSION.
+
 services:
   # ============================================
   # Servicio 1: Base de datos PostgreSQL
@@ -19,25 +23,28 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-futbol_user}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-futbol_user} -d ${POSTGRES_DB:-futbol_up}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # ============================================
-  # Servicio 2: Aplicación Next.js
+  # Servicio 2: Servidor Node del módulo de bienestar
   # ============================================
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-sin-version}
+    image: mvp-futbol-up:${APP_VERSION:-sin-version}
     container_name: mvp-futbol-up-app
     restart: unless-stopped
     environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-futbol_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-futbol_up}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-futbol_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-futbol_up}
+      ANONIMIZATION_SALT: ${ANONIMIZATION_SALT}
       JWT_SECRET: ${JWT_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      PARTIDOS_FINALIZADOS: ${PARTIDOS_FINALIZADOS:-partido-demo-1,partido-demo-2}
     ports:
       - "3000:3000"
     depends_on:
@@ -46,18 +53,12 @@ services:
     networks:
       - mvp-network
 
-# ============================================
-# Volúmenes persistentes
-# ============================================
 volumes:
   postgres_data:
     driver: local
     labels:
       description: "Datos persistentes de PostgreSQL - MVP Fútbol UP"
 
-# ============================================
-# Red virtual aislada
-# ============================================
 networks:
   mvp-network:
     driver: bridge

@@ -1,54 +1,29 @@
 # ============================================
-# ETAPA 1: Builder (imagen pesada con herramientas de desarrollo)
+# MVP Fútbol UP · imagen del servidor de bienestar (FPI-III-15)
+# Multietapa (ADR-10): la etapa de build compila TypeScript; la de producción solo lleva
+# dependencias de runtime, el JavaScript compilado y las migraciones. Usuario no root.
 # ============================================
 FROM node:20-alpine AS builder
-
 WORKDIR /app
-
-# Copiar primero los archivos de dependencias para aprovechar caché de capas
-COPY package.json package-lock.json* ./
-
-# Instalar dependencias (incluye devDependencies necesarias para el build)
-RUN npm install
-
-# Copiar el resto del código fuente
-COPY . .
-
-# Generar el build de producción de Next.js
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.build.json ./
+COPY src ./src
 RUN npm run build
 
-# ============================================
-# ETAPA 2: Producción (imagen minimalista)
-# ============================================
 FROM node:20-alpine AS production
-
-# Crear usuario no root por seguridad
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
+ARG APP_VERSION=sin-version
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs app
 WORKDIR /app
-
-# Copiar solo las dependencias de producción
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev && npm cache clean --force
-
-# Copiar el build y los archivos estáticos desde el builder
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-
-# Asignar propietario al usuario no root
-RUN chown -R nextjs:nodejs /app
-
-# Cambiar a usuario no root
-USER nextjs
-
-# Variables de entorno por defecto (sobrescribibles en runtime)
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=builder /app/dist ./dist
+COPY db ./db
+USER app
+ENV NODE_ENV=production \
+    PORT=3000 \
+    APP_VERSION=${APP_VERSION}
 EXPOSE 3000
-
-# Comando de inicio
-CMD ["node", "server.js"]
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/composicion/main.js"]
