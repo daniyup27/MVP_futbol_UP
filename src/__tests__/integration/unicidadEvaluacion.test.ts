@@ -57,4 +57,18 @@ describe('CP-03 · una autoevaluación por estudiante y partido', () => {
     expect(reintento.body.idEvaluacion).toBe(primero.body.idEvaluacion);
     expect(distinto.body.codigo).toBe('EVALUACION_YA_REGISTRADA');
   });
+
+  it('H-02 por HTTP: un partido inexistente responde 404 PARTIDO_NO_ENCONTRADO', async () => {
+    const { servicio } = escenario();
+    const servidor = crearServidorEvaluaciones({
+      servicio,
+      autenticar: (req: IncomingMessage) => (req.headers['x-sub-prueba'] as string) ?? null,
+    });
+    const res = await request(servidor)
+      .post(RUTA_EVALUACIONES)
+      .set('x-sub-prueba', 'estudiante-A')
+      .send({ idPartido: 'no-existe', escalaFisica: 4, escalaMental: 3 });
+    expect(res.status).toBe(404);
+    expect(res.body.codigo).toBe('PARTIDO_NO_ENCONTRADO');
+  });
 });

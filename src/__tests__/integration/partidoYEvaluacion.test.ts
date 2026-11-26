@@ -16,7 +16,7 @@ describe('Registrar evaluación según el estado de la entidad Partido', () => {
     expect(repositorio.listar()[0].evaluacion).toMatchObject({ idPartido: 'partido-7', escalaFisica: 5, escalaMental: 1 });
   });
 
-  it('se rechaza si el partido sigue PROGRAMADO o no existe, y no se guarda nada', async () => {
+  it('se rechaza si el partido sigue PROGRAMADO o no existe (H-02: códigos distintos), y no se guarda nada', async () => {
     const repositorio = new RepositorioBienestarEnMemoria();
     const servicio = crearServicioBienestar({
       repositorio,
@@ -27,7 +27,7 @@ describe('Registrar evaluación según el estado de la entidad Partido', () => {
       codigo: 'PARTIDO_NO_FINALIZADO',
     });
     await expect(servicio.registrarEvaluacion('estudiante-A', 't-1', 'no-existe', 4, 3)).rejects.toMatchObject({
-      codigo: 'PARTIDO_NO_FINALIZADO',
+      codigo: 'PARTIDO_NO_ENCONTRADO',
     });
     expect(repositorio.listar()).toHaveLength(0);
   });

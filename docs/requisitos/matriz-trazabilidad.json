@@ -1,6 +1,6 @@
 {
-  "version": "1.1",
-  "ers": "docs/requisitos/ERS-bienestar-v1.1.md",
+  "version": "1.2",
+  "ers": "docs/requisitos/ERS-bienestar-v1.2.md",
   "requisitos": [
     {
       "id": "RF-01",
@@ -26,14 +26,16 @@
         "src/core/ServicioBienestar.ts",
         "src/core/dominio/Partido.ts",
         "src/core/dominio/EscalaBienestar.ts",
-        "src/core/errores.ts"
+        "src/core/errores.ts",
+        "src/core/ports/IValidadorPartido.ts"
       ],
-      "contrato": "registrarEvaluacion(idEstudiante, idTorneo, idPartido, escalaFisica, escalaMental): Promise<string> (docs/swiii/G06-contrato-registrar-evaluacion.md)",
+      "contrato": "registrarEvaluacion(idEstudiante, idTorneo, idPartido, escalaFisica, escalaMental): Promise<string> (docs/swiii/G06-contrato-registrar-evaluacion.md) · v1.2: PARTIDO_NO_ENCONTRADO (404) separado de PARTIDO_NO_FINALIZADO (409)",
       "pruebas": [
         "src/core/__tests__/ServicioBienestar.test.ts",
         "src/__tests__/integration/partidoYEvaluacion.test.ts",
         "src/__tests__/http/registrarEvaluacion.http.test.ts",
-        "src/__tests__/integration/dependencia-no-disponible.test.ts"
+        "src/__tests__/integration/dependencia-no-disponible.test.ts",
+        "src/__tests__/comparacion/registrarEvaluacion.comparacion.test.ts"
       ],
       "estado": "verificado"
     },

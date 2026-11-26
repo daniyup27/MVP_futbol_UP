@@ -18,3 +18,10 @@
 ## Observaciones sin cambio
 - La matriz v1.0 pasa la verificación automática (`trazabilidad.test.ts`).
 - AQ-02 (healthcheck) no entra en esta versión: el CD está roto (FPI-III-02) y no hay prueba que lo cubra.
+
+## Seguimiento de cierre
+
+| ID | Estado | Evidencia de cierre |
+|---|---|---|
+| H-01 | Cerrado en FPI-III-11 | CP-03: `RegistroEvaluacionPartido.test.ts` y `unicidadEvaluacion.test.ts` en verde; RF-03 verificado en la matriz v1.1 |
+| H-02 | Cerrado en FPI-III-12 | Caso «partido inexistente → PARTIDO_NO_ENCONTRADO» en `registrarEvaluacion.comparacion.test.ts` y 404 en `unicidadEvaluacion.test.ts`; ERS v1.2 |

@@ -49,6 +49,12 @@ describe.each(versiones)('%s', (_nombre, crear) => {
     expect(d.repositorio.listar()).toHaveLength(0);
   });
 
+  it('cambio H-02 · partido inexistente → PARTIDO_NO_ENCONTRADO y 0 registros', async () => {
+    const d = estadoInicial();
+    await expect(crear(d)('estudiante-A', 'no-existe', 4, 3)).rejects.toMatchObject({ codigo: 'PARTIDO_NO_ENCONTRADO' });
+    expect(d.repositorio.listar()).toHaveLength(0);
+  });
+
   it('control RF-03 · reintento igual devuelve el mismo id; distinto → EVALUACION_YA_REGISTRADA', async () => {
     const d = estadoInicial();
     const registrar = crear(d);
